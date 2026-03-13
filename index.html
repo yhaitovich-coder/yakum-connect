@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>יקום Connect - V1.8.0</title>
+
+    <!-- Supabase -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <!-- html2canvas + jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #2ecc71;
+            --primary-dark: #27ae60;
+            --selected: #3498db;
+            --occupied: #e74c3c;
+            --past: #f39c12;
+            --radius: 12px;
+        }
+
+        /* ===== RESET & BASE ===== */
+        *, *::before, *::after { box-sizing: border-box; }
+        html { font-size: 16px; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            direction: rtl;
+            background: #f4f7f6;
+            margin: 0;
+            padding: 12px 10px 30px;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        /* ===== VERSION BADGE ===== */
+        .version-badge {
+            position: fixed;
+            top: 6px;
+            left: 6px;
+            background: #34495e;
+            color: #ecf0f1;
+            padding: 4px 9px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: bold;
+            z-index: 9999;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            pointer-events: none;
+        }
+
+        /* ===== CARD ===== */
+        .card {
+            background: #fff;
+            padding: 18px 16px;
+            border-radius: var(--radius);
+            box-shadow: 0 3px 12px rgba(0,0,0,0.07);
+            margin-bottom: 14px;
+        }
+        .card h2 {
+            text-align: center;
+            margin: 0 0 16px;
+            font-size: 1.15rem;
+            color: #2c3e50;
+        }
+
+        /* ===== LABELS ===== */
+        label {
+            display: block;
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #34495e;
+            margin: 12px 0 4px;
+        }
+        .required::after {
+            content: " *";
+            color: #e74c3c;
+        }
+
+        /* ===== INPUTS ===== */
+        input, select {
+            width: 100%;
+            padding: 13px 12px;
+            margin: 0 0 6px;
+            border-radius: 10px;
+            border: 1.5px solid #ddd;
+            font-family: inherit;
+            font-size: 1rem;
+            color: #2c3e50;
+            background: #fff;
+            appearance: auto;
+            -webkit-appearance: auto;
+            transition: border-color .2s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* ===== TIME ROW ===== */
+        .time-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .time-row input {
+            flex: 1;
+            min-width: 0;
+            text-align: center;
+            font-weight: 700;
+            color: #2980b9;
+            background: #eaf4fb;
+            border-color: #aed6f1;
+        }
+
+        /* ===== SLOT GRID ===== */
+        .slots-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            margin-top: 12px;
+        }
+        /* on very small screens → 3 columns */
+        @media (max-width: 360px) {
+            .slots-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        .slot {
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.82rem;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 1.5px solid #eee;
+            font-weight: 700;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            transition: transform .1s, box-shadow .1s;
+        }
+        .slot:active { transform: scale(0.95); }
+        .slot.available {
+            background: #e8f5e9;
+            color: var(--primary-dark);
+            border-color: #c8e6c9;
+        }
+        .slot.available:hover {
+            box-shadow: 0 3px 8px rgba(46,204,113,0.3);
+        }
+        .slot.selected {
+            background: var(--selected) !important;
+            color: #fff !important;
+            border-color: #2980b9 !important;
+            box-shadow: 0 3px 8px rgba(52,152,219,0.4);
+        }
+        .slot.occupied {
+            background: #fdedec;
+            color: var(--occupied);
+            border-color: #fadbd8;
+            cursor: not-allowed;
+            opacity: 0.75;
+        }
+        .slot.past {
+            background: #fef5e7;
+            color: var(--past);
+            border-color: #fdebd0;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        /* ===== LEGEND ===== */
+        .slot-legend {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: #666;
+            justify-content: center;
+        }
+        .legend-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 4px;
+            vertical-align: middle;
+        }
+
+        /* ===== BUTTONS ===== */
+        button {
+            width: 100%;
+            padding: 14px 12px;
+            margin: 8px 0 4px;
+            border-radius: 10px;
+            border: none;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            transition: opacity .15s, transform .1s;
+        }
+        button:active { transform: scale(0.98); }
+        .btn-contract {
+            background: #34495e;
+            color: #fff;
+        }
+        .btn-contract.approved {
+            background: var(--primary-dark);
+        }
+        .btn-main {
+            background: var(--primary);
+            color: #fff;
+            font-size: 1.05rem;
+            height: 54px;
+            border-radius: 12px;
+            margin-top: 14px;
+            box-shadow: 0 4px 14px rgba(46,204,113,0.35);
+        }
+        .btn-main:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* ===== SIGNATURE CANVAS ===== */
+        .sig-wrap {
+            position: relative;
+            margin-top: 12px;
+        }
+        #sig-canvas {
+            border: 2px dashed #bdc3c7;
+            width: 100%;
+            height: 150px;
+            background: #fafafa;
+            border-radius: 10px;
+            touch-action: none;
+            display: block;
+        }
+        #sig-canvas.has-sig {
+            border-color: var(--primary);
+            background: #f0fff4;
+        }
+        .btn-clear-sig {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            width: auto;
+            padding: 4px 10px;
+            font-size: 0.72rem;
+            margin: 0;
+            background: rgba(231,76,60,0.85);
+            color: #fff;
+            border-radius: 6px;
+        }
+        .sig-hint {
+            text-align: center;
+            font-size: 0.72rem;
+            color: #95a5a6;
+            margin: 4px 0 0;
+        }
+
+        /* ===== MODAL ===== */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            padding: 16px;
+            overflow-y: auto;
+        }
+        .modal-content {
+            background: #fff;
+            margin: auto;
+            width: 100%;
+            max-width: 460px;
+            border-radius: 15px;
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            max-height: 88vh;
+        }
+        .modal-header {
+            padding: 15px 18px;
+            border-bottom: 1px solid #eee;
+            font-weight: 800;
+            font-size: 1.05rem;
+            flex-shrink: 0;
+        }
+        .modal-body {
+            padding: 18px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            flex: 1;
+            font-size: 0.92rem;
+            line-height: 1.6;
+        }
+        .modal-footer {
+            padding: 14px 18px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        .modal-btn {
+            flex: 1;
+            padding: 13px;
+            border-radius: 9px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+        .btn-approve { background: var(--primary); color: #fff; }
+        .btn-cancel  { background: #95a5a6; color: #fff; }
+
+        /* ===== PDF TEMPLATES (off-screen) ===== */
+        #pdf-page1 {
+            position: absolute;
+            left: -9999px;
+            width: 750px;
+            background: #fff;
+            padding: 50px;
+            color: #000;
+            display: block;
+        }
+        #pdf-signature-page {
+            position: absolute;
+            left: -9999px;
+            width: 750px;
+            height: 1050px;
+            background: #fff;
+            padding: 50px;
+            color: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .pdf-signature-section {
+            padding: 30px;
+            border: 3px solid #2ecc71;
+            border-radius: 15px;
+            background: #f9f9f9;
+        }
+
+        /* ===== DEBUG ===== */
+        .debug-section {
+            display: block;
+        }
+        .debug-header {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 8px 12px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 8px 8px 0 0;
+        }
+
+        /* ===== MOBILE OVERRIDES ===== */
+        @media (max-width: 480px) {
+            body { padding: 8px 8px 24px; }
+            .card { padding: 14px 12px; }
+            input, select { font-size: 16px; /* prevent iOS zoom */ }
+            button { font-size: 0.95rem; }
+            .btn-main { font-size: 1rem; height: 52px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="version-badge">V1.8.1</div>
+
+<div class="container" style="max-width: 500px; margin: auto;">
+    <div class="card">
+        <h2>הזמנת משאב קהילתי</h2>
+
+        <label for="resSelect" class="required">בחר משאב</label>
+        <select id="resSelect"></select>
+
+        <label for="resDate" class="required">בחר תאריך</label>
+        <input type="date" id="resDate">
+
+        <div id="slotsGrid" class="slots-grid"></div>
+
+        <!-- legend -->
+        <div class="slot-legend" id="slotLegend" style="display:none;">
+            <span><span class="legend-dot" style="background:#e8f5e9; border:1.5px solid #c8e6c9;"></span>פנוי</span>
+            <span><span class="legend-dot" style="background:#3498db;"></span>נבחר</span>
+            <span><span class="legend-dot" style="background:#fdedec; border:1.5px solid #fadbd8;"></span>תפוס</span>
+            <span><span class="legend-dot" style="background:#fef5e7; border:1.5px solid #fdebd0;"></span>עבר</span>
+        </div>
+
+        <div class="time-row">
+            <input type="time" id="startT" readonly placeholder="התחלה">
+            <input type="time" id="endT" readonly placeholder="סיום">
+        </div>
+    </div>
+
+    <div class="card">
+        <label for="uName" class="required">שם מלא</label>
+        <input type="text"  id="uName"  placeholder="ישראל ישראלי">
+
+        <label for="uEmail" class="required">אימייל</label>
+        <input type="email" id="uEmail" placeholder="example@mail.com" inputmode="email" autocomplete="email">
+
+        <label for="uPhone" class="required">טלפון</label>
+        <input type="tel"   id="uPhone" placeholder="050-0000000" inputmode="tel" autocomplete="tel">
+
+        <button type="button" id="btnContract" class="btn-contract">⓵ קרא ואשר חוזה</button>
+
+        <label>⓶ חתימה</label>
+        <div class="sig-wrap">
+            <canvas id="sig-canvas"></canvas>
+            <button type="button" id="btnClearSig" class="btn-clear-sig">✕ נקה</button>
+        </div>
+        <p class="sig-hint">חתום עם האצבע או העכבר</p>
+
+        <button type="button" class="btn-main" id="submitBtn">⓷ אשר וסגור חוזה במייל</button>
+    </div>
+
+    <!-- Debug Log -->
+    <div class="debug-section" id="debugSection">
+        <div class="debug-header">🔍 לוג מערכת - V1.8.1</div>
+        <div id="debug-log" style="background:#000;color:#0f0;font-family:'Courier New',monospace;font-size:10px;padding:10px;border-radius:0;max-height:180px;overflow-y:auto;white-space:pre-line;direction:ltr;text-align:left;"></div>
+        <div style="display:flex;gap:0;">
+            <button type="button" id="btnDownloadLog"
+                style="background:#2c3e50;color:#fff;font-size:10px;border:none;padding:8px;cursor:pointer;border-radius:0 0 0 8px;flex:1;margin:0;">
+                📥 הורד לוג TXT
+            </button>
+            <button type="button" id="btnClearLog"
+                style="background:#7f8c8d;color:#fff;font-size:10px;border:none;padding:8px;cursor:pointer;border-radius:0 0 8px 0;flex:1;margin:0;">
+                🗑 נקה לוג
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="termsModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">תנאי שימוש</div>
+        <div class="modal-body" id="modalTermsText"></div>
+        <div class="modal-footer">
+            <button class="modal-btn btn-approve" id="btnApproveContract">✓ מאשר</button>
+            <button class="modal-btn btn-cancel"  id="btnCancelContract">✗ ביטול</button>
+        </div>
+    </div>
+</div>
+
+<!-- עמוד 1: פרטי חוזה -->
+<div id="pdf-page1" dir="rtl">
+    <div style="text-align:center; border-bottom:4px solid #2ecc71; padding-bottom:20px;">
+        <img src="https://jqddombezqqvdcxqlife.supabase.co/storage/v1/object/public/contracts/Yakum%20final%20logo-02.jpg"
+             style="height:90px;"
+             alt="לוגו יקום">
+        <h1>חוזה חתום ואישור הזמנה</h1>
+    </div>
+    <div style="font-size: 1.3rem; margin-top:20px;">
+        <p><b>מזמין:</b> <span id="pdf1-n"></span></p>
+        <p><b>משאב:</b> <span id="pdf1-r"></span></p>
+        <p><b>תאריך הזמנה:</b> <span id="pdf1-t"></span></p>
+        <div id="pdf1-terms"
+             style="white-space: pre-wrap; background: #f9f9f9; padding: 20px; border: 1px solid #ddd; margin: 20px 0; border-radius: 8px;"></div>
+    </div>
+</div>
+
+<!-- עמוד אחרון: חתימה ונתוני זיהוי -->
+<div id="pdf-signature-page" dir="rtl">
+    <div class="pdf-signature-section">
+        <div style="text-align:center;">
+            <p style="font-weight:bold; font-size:1.5rem; margin-bottom:20px; color:#2ecc71;">חתימה דיגיטלית</p>
+            <img id="pdf2-s" style="max-width:400px; border:2px solid #ccc; margin-bottom:20px; border-radius:8px;">
+            
+            <div style="font-size:1.1rem; color:#555; text-align:right; margin-top:30px;">
+                <p><b>תאריך וזמן חתימה:</b> <span id="pdf2-sig-time"></span></p>
+                
+                <hr style="margin: 25px 0; border: none; border-top: 2px solid #2ecc71;">
+                
+                <p style="font-weight:bold; font-size:1.3rem; color:#2ecc71; margin-bottom:20px; text-align:center;">
+                    📋 פרטי רישום מערכת - הוכחת קבלה בשרת
+                </p>
+                
+                <div style="background:#fff; padding:20px; border-radius:8px; border:1px solid #ddd;">
+                    <p style="margin:10px 0;"><b>מספר רישום מערכת:</b><br>
+                       <span id="pdf2-booking-id" style="font-family:monospace; color:#2980b9;"></span></p>
+                    
+                    <p style="margin:10px 0;"><b>מזהה עסקה:</b><br>
+                       <span id="pdf2-transaction-id" style="font-family:monospace; color:#27ae60;"></span></p>
+                    
+                    <p style="margin:10px 0;"><b>תאריך ושעת רישום בשרת:</b><br>
+                       <span id="pdf2-server-time" style="font-family:monospace;"></span></p>
+                </div>
+                
+                <p style="font-size:0.9rem; color:#7f8c8d; margin-top:25px; text-align:center; font-style:italic;">
+                    מסמך זה מהווה אישור רשמי לרישום ההזמנה במערכת יקום Connect<br>
+                    ומהווה הוכחה משפטית לביצוע העסקה
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const APP_VERSION = 'V1.8.1';
+
+    const SB_URL = 'https://jqddombezqqvdcxqlife.supabase.co';
+    const SB_KEY = 'sb_publishable_sa2f3GLX587P1t0InAnlRA_01dkA4H_';
+
+    const supa = supabase.createClient(SB_URL, SB_KEY);
+
+    const logs = [];
+    let resourcesData = [];
+    let contractApproved = false;
+    let signatureMade = false;
+    let selectionStep = 0;
+
+    function addLog(msg, level = 'INFO') {
+        const ts = new Date().toLocaleTimeString('he-IL', { hour12: false });
+        const line = `[${ts}] [${level}] ${msg}`;
+        logs.push(line);
+        document.getElementById('debug-log').textContent = logs.slice(-14).join('\n');
+        console.log(`${APP_VERSION} ${line}`);
+    }
+
+    async function initApp() {
+        addLog(`=== SESSION START ${APP_VERSION} ===`);
+        try {
+            const dateInput = document.getElementById('resDate');
+            dateInput.valueAsDate = new Date();
+            addLog('Default date set to today');
+
+            await loadResources();
+            setupSignatureCanvas();
+            setupEventHandlers();
+
+            addLog('✓ Application initialized successfully');
+        } catch (err) {
+            addLog('✗ initApp failed: ' + err.message, 'ERROR');
+            alert('שגיאת אתחול מערכת: ' + err.message);
+        }
+    }
+
+    async function loadResources() {
+        addLog('Loading resources from Supabase...');
+        const sel = document.getElementById('resSelect');
+        sel.innerHTML = '<option value="">⏳ טוען משאבים...</option>';
+
+        const { data, error } = await supa
+            .from('resources')
+            .select('*')
+            .order('name');
+
+        if (error) {
+            addLog('✗ loadResources error: ' + error.message, 'ERROR');
+            sel.innerHTML = '<option value="">שגיאה בטעינת משאבים</option>';
+            throw error;
+        }
+
+        resourcesData = data || [];
+        sel.innerHTML = '<option value="">-- בחר משאב --</option>';
+        resourcesData.forEach(r => {
+            const opt = document.createElement('option');
+            opt.value = r.id;
+            opt.textContent = r.name;
+            sel.appendChild(opt);
+        });
+
+        addLog(`✓ Resources loaded successfully (count: ${resourcesData.length})`);
+    }
+
+    async function checkAvailability() {
+        const resId = document.getElementById('resSelect').value;
+        const dateStr = document.getElementById('resDate').value;
+
+        if (!resId || !dateStr) {
+            addLog('checkAvailability skipped - missing resId or date');
+            document.getElementById('slotsGrid').innerHTML = '';
+            document.getElementById('startT').value = '';
+            document.getElementById('endT').value = '';
+            return;
+        }
+
+        addLog(`Checking availability: resource=${resId.substr(0,8)}..., date=${dateStr}`);
+
+        const { data: bookings, error } = await supa
+            .from('bookings')
+            .select('*')
+            .eq('resource_id', resId)
+            .gte('start_time', `${dateStr}T00:00`)
+            .lte('start_time', `${dateStr}T23:59`);
+
+        if (error) {
+            addLog('✗ checkAvailability error: ' + error.message, 'ERROR');
+            alert('שגיאה בבדיקת זמינות: ' + error.message);
+            return;
+        }
+
+        const grid = document.getElementById('slotsGrid');
+        grid.innerHTML = '';
+        const now = new Date();
+        let availableCount = 0, occupiedCount = 0, pastCount = 0;
+
+        for (let h = 8; h < 22; h++) {
+            ['00', '30'].forEach(m => {
+                const tStr = `${h.toString().padStart(2,'0')}:${m}`;
+                const div = document.createElement('div');
+                div.className = 'slot';
+                div.textContent = tStr;
+
+                const slotTime = new Date(`${dateStr}T${tStr}:00`);
+
+                if (slotTime < now) {
+                    div.classList.add('past');
+                    pastCount++;
+                } else {
+                    const occupied = (bookings || []).some(b =>
+                        tStr >= b.start_time.slice(11,16) &&
+                        tStr <  b.end_time.slice(11,16)
+                    );
+                    if (occupied) {
+                        div.classList.add('occupied');
+                        occupiedCount++;
+                    } else {
+                        div.classList.add('available');
+                        div.addEventListener('click', () => selectSlot(tStr));
+                        availableCount++;
+                    }
+                }
+
+                grid.appendChild(div);
+            });
+        }
+
+        addLog(`✓ Grid rendered: ${availableCount} available, ${occupiedCount} occupied, ${pastCount} past`);
+
+        // show legend once grid is populated
+        document.getElementById('slotLegend').style.display = 'flex';
+    }
+
+    function selectSlot(tStr) {
+        const startInput = document.getElementById('startT');
+        const endInput   = document.getElementById('endT');
+
+        if (selectionStep === 0) {
+            startInput.value = tStr;
+            endInput.value = '';
+            selectionStep = 1;
+        } else {
+            if (tStr > startInput.value) {
+                endInput.value = tStr;
+                selectionStep = 0;
+            } else {
+                startInput.value = tStr;
+                endInput.value = '';
+            }
+        }
+        updateSlotsSelection();
+        addLog(`Slot selected: start=${startInput.value}, end=${endInput.value}`);
+    }
+
+    function updateSlotsSelection() {
+        const s = document.getElementById('startT').value;
+        const e = document.getElementById('endT').value;
+        document.querySelectorAll('.slot').forEach(el => {
+            el.classList.remove('selected');
+            const t = el.textContent;
+            if (s && !e && t === s) el.classList.add('selected');
+            if (s && e && t >= s && t <= e) el.classList.add('selected');
+        });
+    }
+
+    function validateAndSubmit() {
+        const resId   = document.getElementById('resSelect').value;
+        const resDate = document.getElementById('resDate').value;
+        const startT  = document.getElementById('startT').value;
+        const endT    = document.getElementById('endT').value;
+        const name    = document.getElementById('uName').value.trim();
+        const email   = document.getElementById('uEmail').value.trim();
+        const phone   = document.getElementById('uPhone').value.trim();
+
+        addLog('validateAndSubmit called');
+
+        if (!resId || !resDate || !startT || !endT || !name || !email || !phone) {
+            addLog('✗ Validation failed: missing required fields', 'WARN');
+            alert('אנא מלא את כל הפרטים ואת חלון הזמן.');
+            return;
+        }
+        if (!contractApproved) {
+            addLog('✗ Validation failed: contract not approved', 'WARN');
+            alert('יש לאשר את תנאי החוזה.');
+            return;
+        }
+        if (!signatureMade) {
+            addLog('✗ Validation failed: signature not made', 'WARN');
+            alert('יש לחתום לפני השליחה.');
+            return;
+        }
+
+        addLog('✓ Validation passed - proceeding to booking');
+        submitBooking();
+    }
+
+    async function submitBooking() {
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.textContent = '⏳ שומר נתונים...';
+        addLog('=== SUBMIT BOOKING PROCESS STARTED ===');
+
+        try {
+            const resId = document.getElementById('resSelect').value;
+            const res = resourcesData.find(r => String(r.id) === String(resId));
+            if (!res) {
+                throw new Error('המשאב שנבחר לא קיים ברשימה');
+            }
+
+            const name  = document.getElementById('uName').value.trim();
+            const email = document.getElementById('uEmail').value.trim();
+            const phone = document.getElementById('uPhone').value.trim();
+            const date  = document.getElementById('resDate').value;
+            const sTime = document.getElementById('startT').value;
+            const eTime = document.getElementById('endT').value;
+
+            const canvas = document.getElementById('sig-canvas');
+            const sigDataUrl = canvas.toDataURL('image/png');
+
+            addLog('STEP 1: Saving booking to database...');
+            const { data: insertData, error: insertError } = await supa
+                .from('bookings')
+                .insert([{
+                    resource_id: res.id,
+                    full_name: name,
+                    email: email,
+                    phone: phone,
+                    start_time: `${date}T${sTime}`,
+                    end_time:   `${date}T${eTime}`,
+                    signature_data: sigDataUrl
+                }])
+                .select()
+                .single();
+
+            if (insertError) {
+                addLog('✗ DB insert error: ' + insertError.message, 'ERROR');
+                throw insertError;
+            }
+            addLog(`✓ Booking saved. ID: ${insertData.id}`);
+
+            addLog('STEP 2: Preparing PDF templates...');
+            const now = new Date();
+            const sigTimeStr = now.toLocaleDateString('he-IL', { 
+                year: 'numeric', month: 'long', day: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+
+            const serverTimeStr = now.toLocaleDateString('he-IL', {
+                year: 'numeric', month: 'long', day: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            });
+
+            const transactionId = `YKM-${Date.now()}-${insertData.id.substr(0,8)}`;
+
+            // עמוד 1
+            document.getElementById('pdf1-n').textContent = name;
+            document.getElementById('pdf1-r').textContent = res.name;
+            document.getElementById('pdf1-t').textContent = `${date} | ${sTime} - ${eTime}`;
+            document.getElementById('pdf1-terms').textContent = res.terms_text || 'אין תקנון מוגדר';
+
+            // עמוד חתימה
+            document.getElementById('pdf2-s').src = sigDataUrl;
+            document.getElementById('pdf2-sig-time').textContent = sigTimeStr;
+            document.getElementById('pdf2-booking-id').textContent = insertData.id;
+            document.getElementById('pdf2-transaction-id').textContent = transactionId;
+            document.getElementById('pdf2-server-time').textContent = serverTimeStr;
+
+            // המתן לטעינת תמונת החתימה (אמין יותר מ-setTimeout, בייחוד באנדרואיד)
+            const sigImg = document.getElementById('pdf2-s');
+            await new Promise(resolve => {
+                if (sigImg.complete && sigImg.naturalWidth > 0) { resolve(); return; }
+                sigImg.onload = resolve;
+                sigImg.onerror = resolve;
+                setTimeout(resolve, 1500); // fallback
+            });
+
+            addLog('STEP 3: Generating multi-page PDF...');
+            
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({
+                orientation: 'p',
+                unit: 'mm',
+                format: 'a4'
+            });
+
+            // רנדור עמוד 1
+            const page1Element = document.getElementById('pdf-page1');
+            const canvas1 = await html2canvas(page1Element, { scale: 1.5, logging: false });
+            const img1Data = canvas1.toDataURL('image/png');
+            const page1Height = (canvas1.height * 210) / canvas1.width;
+            
+            // אם העמוד ארוך מ-A4, נחלק אותו
+            if (page1Height > 297) {
+                const numPages = Math.ceil(page1Height / 297);
+                addLog(`Page 1 content requires ${numPages} pages`);
+                
+                for (let i = 0; i < numPages; i++) {
+                    if (i > 0) pdf.addPage();
+                    const yOffset = -i * 297;
+                    pdf.addImage(img1Data, 'PNG', 0, yOffset, 210, page1Height);
+                }
+            } else {
+                pdf.addImage(img1Data, 'PNG', 0, 0, 210, page1Height);
+            }
+
+            // עמוד חתימה (תמיד בעמוד חדש)
+            pdf.addPage();
+            const sigPageElement = document.getElementById('pdf-signature-page');
+            const canvasSig = await html2canvas(sigPageElement, { scale: 1.5, logging: false });
+            const imgSigData = canvasSig.toDataURL('image/png');
+            pdf.addImage(imgSigData, 'PNG', 0, 0, 210, 297);
+
+            // המר PDF ל-base64
+            const pdfBase64 = pdf.output('datauristring').split(',')[1];
+            addLog('✓ Multi-page PDF generated');
+
+            // STEP 4: הורדה מקומית של ה-PDF (גיבוי למשתמש)
+            addLog('STEP 4: Downloading PDF locally...');
+            const localFileName = `Yakum_Contract_${insertData.id.substr(0,8)}.pdf`;
+            const pdfBlob = pdf.output('blob');
+            const localUrl = URL.createObjectURL(pdfBlob);
+            const downloadLink = document.createElement('a');
+            downloadLink.href = localUrl;
+            downloadLink.download = localFileName;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            setTimeout(() => URL.revokeObjectURL(localUrl), 3000);
+            addLog(`✓ PDF saved locally: ${localFileName}`);
+
+            // STEP 5: שליחת מייל עם PDF מצורף דרך Edge Function
+            addLog('STEP 5: Sending email via Edge Function...');
+            btn.textContent = '📧 שולח מייל...';
+
+            const emailPayload = {
+                full_name: name,
+                email: email,
+                phone: phone,
+                resource_name: res.name,
+                date: date,
+                start_time: sTime,
+                end_time: eTime,
+                booking_id: insertData.id,
+                transaction_id: transactionId,
+                pdf_base64: pdfBase64
+            };
+
+            const emailResp = await fetch(
+                'https://jqddombezqqvdcxqlife.supabase.co/functions/v1/send-booking-email',
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(emailPayload)
+                }
+            );
+
+            const emailResult = await emailResp.json();
+
+            if (!emailResp.ok) {
+                addLog('✗ Email send failed: ' + (emailResult.error || emailResp.status), 'ERROR');
+                // לא זורקים שגיאה — ההזמנה נשמרה, רק המייל נכשל
+                alert('⚠️ ההזמנה נשמרה בהצלחה, אך שליחת המייל נכשלה.\nהחוזה הורד למכשיר שלך — שלח אותו ידנית ל-yaronh@yakum.org.il');
+            } else {
+                addLog('✓ Email sent successfully');
+            }
+
+            addLog('=== ✓ PROCESS COMPLETED ===');
+            btn.disabled = false;
+            btn.textContent = '✅ ההזמנה אושרה! המייל נשלח אוטומטית';
+
+        } catch (err) {
+            addLog('✗✗✗ PROCESS FAILED: ' + err.message, 'ERROR');
+            alert('❌ תקלה בהשלמת ההזמנה:\n\n' + err.message + '\n\nבדוק את הלוג למידע נוסף.');
+            btn.disabled = false;
+            btn.textContent = '🔄 נסה שוב';
+        }
+    }
+
+    function openContractModal() {
+        const resId = document.getElementById('resSelect').value;
+        const res = resourcesData.find(r => String(r.id) === String(resId));
+        if (!res) {
+            alert('יש לבחור משאב לפני קריאת החוזה.');
+            addLog('Contract modal - no resource selected', 'WARN');
+            return;
+        }
+        document.getElementById('modalTermsText').textContent = res.terms_text || 'אין תקנון מוגדר למשאב זה.';
+        document.getElementById('termsModal').style.display = 'block';
+        addLog('Contract modal opened: ' + res.name);
+    }
+
+    function closeContractModal() {
+        document.getElementById('termsModal').style.display = 'none';
+        addLog('Contract modal closed');
+    }
+
+    function approveContract() {
+        contractApproved = true;
+        addLog('✓ Contract approved');
+        const btn = document.getElementById('btnContract');
+        btn.textContent = '✓ חוזה אושר';
+        btn.classList.add('approved');
+        closeContractModal();
+    }
+
+    function setupSignatureCanvas() {
+        const canvas = document.getElementById('sig-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Android fix: offsetWidth may be 0 before paint — use getBoundingClientRect
+        const rect = canvas.getBoundingClientRect();
+        canvas.width  = Math.round(rect.width)  || canvas.offsetWidth  || 400;
+        canvas.height = Math.round(rect.height) || canvas.offsetHeight || 150;
+
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = '#2c3e50';
+
+        let drawing = false;
+
+        const getPos = (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width  / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top)  * scaleY
+            };
+        };
+
+        const startDraw = (e) => {
+            e.preventDefault();
+            // Android fix: re-init canvas dimensions if still 0 (lazy paint)
+            if (canvas.width < 10) {
+                const r2 = canvas.getBoundingClientRect();
+                canvas.width  = Math.round(r2.width)  || 400;
+                canvas.height = Math.round(r2.height) || 150;
+                ctx.lineWidth = 2.5;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.strokeStyle = '#2c3e50';
+            }
+            drawing = true;
+            signatureMade = true;
+            canvas.classList.add('has-sig');
+            const pos = getPos(e);
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+        };
+
+        const draw = (e) => {
+            if (!drawing) return;
+            e.preventDefault();
+            const pos = getPos(e);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+        };
+
+        const endDraw = () => { drawing = false; };
+
+        canvas.addEventListener('mousedown', startDraw);
+        canvas.addEventListener('mousemove', draw);
+        window.addEventListener('mouseup', endDraw);
+
+        canvas.addEventListener('touchstart', startDraw, { passive: false });
+        canvas.addEventListener('touchmove',  draw,       { passive: false });
+        window.addEventListener('touchend',   endDraw);
+
+        // clear signature button
+        document.getElementById('btnClearSig').addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            signatureMade = false;
+            canvas.classList.remove('has-sig');
+            addLog('Signature cleared');
+        });
+
+        addLog('✓ Signature canvas ready');
+    }
+
+    function downloadLogs() {
+        const timestamp = new Date().toISOString().replace(/:/g, '-').substr(0, 19);
+        const header = `YAKUM CONNECT - DEBUG LOG\nVersion: ${APP_VERSION}\nGenerated: ${timestamp}\n${'='.repeat(60)}\n\n`;
+        const content = header + logs.join('\n');
+        
+        const blob = new Blob([content], { type: 'text/plain; charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `yakum_connect_${APP_VERSION}_log_${Date.now()}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        addLog('✓ Log downloaded');
+    }
+
+    function setupEventHandlers() {
+        document.getElementById('resSelect')
+            .addEventListener('change', checkAvailability);
+        document.getElementById('resDate')
+            .addEventListener('change', checkAvailability);
+
+        document.getElementById('btnContract')
+            .addEventListener('click', openContractModal);
+        document.getElementById('btnApproveContract')
+            .addEventListener('click', approveContract);
+        document.getElementById('btnCancelContract')
+            .addEventListener('click', closeContractModal);
+
+        document.getElementById('submitBtn')
+            .addEventListener('click', validateAndSubmit);
+
+        const dlBtn = document.getElementById('btnDownloadLog');
+        if (dlBtn) dlBtn.addEventListener('click', downloadLogs);
+
+        const clrBtn = document.getElementById('btnClearLog');
+        if (clrBtn) clrBtn.addEventListener('click', () => {
+            logs.length = 0;
+            document.getElementById('debug-log').textContent = '';
+            addLog('לוג נוקה');
+        });
+
+        addLog('✓ Event handlers ready');
+    }
+
+    window.addEventListener('load', initApp);
+</script>
+</body>
+</html>
