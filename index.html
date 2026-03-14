@@ -819,7 +819,7 @@
             });
 
             const html2canvasOpts = { 
-                scale: 1.2, 
+                scale: 0.9, 
                 logging: false,
                 backgroundColor: '#ffffff'
             };
@@ -827,7 +827,7 @@
             // רנדור עמוד 1
             const page1Element = document.getElementById('pdf-page1');
             const canvas1 = await html2canvas(page1Element, html2canvasOpts);
-            const img1Data = canvas1.toDataURL('image/png');
+            const img1Data = canvas1.toDataURL('image/jpeg', 0.7);
             const page1Height = (canvas1.height * 210) / canvas1.width;
             
             // אם העמוד ארוך מ-A4, נחלק אותו
@@ -838,18 +838,18 @@
                 for (let i = 0; i < numPages; i++) {
                     if (i > 0) pdf.addPage();
                     const yOffset = -i * 297;
-                    pdf.addImage(img1Data, 'PNG', 0, yOffset, 210, page1Height);
+                    pdf.addImage(img1Data, 'JPEG', 0, yOffset, 210, page1Height);
                 }
             } else {
-                pdf.addImage(img1Data, 'PNG', 0, 0, 210, page1Height);
+                pdf.addImage(img1Data, 'JPEG', 0, 0, 210, page1Height);
             }
 
             // עמוד חתימה (תמיד בעמוד חדש)
             pdf.addPage();
             const sigPageElement = document.getElementById('pdf-signature-page');
             const canvasSig = await html2canvas(sigPageElement, html2canvasOpts);
-            const imgSigData = canvasSig.toDataURL('image/png');
-            pdf.addImage(imgSigData, 'PNG', 0, 0, 210, 297);
+            const imgSigData = canvasSig.toDataURL('image/jpeg', 0.7);
+            pdf.addImage(imgSigData, 'JPEG', 0, 0, 210, 297);
 
             // המר PDF ל-base64
             const pdfBase64 = pdf.output('datauristring').split(',')[1];
