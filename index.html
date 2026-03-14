@@ -543,20 +543,15 @@
         try {
             const dateInput = document.getElementById('resDate');
             const now = new Date();
-            // אחרי 21:30 — ברירת מחדל היא מחר
-            const cutoffHour = 21;
-            const cutoffMinute = 30;
-            const isTooLate = now.getHours() > cutoffHour || 
-                              (now.getHours() === cutoffHour && now.getMinutes() >= cutoffMinute);
-            if (isTooLate) {
-                const tomorrow = new Date(now);
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                dateInput.valueAsDate = tomorrow;
-                addLog('Default date set to tomorrow (after 21:30)');
-            } else {
-                dateInput.valueAsDate = now;
-                addLog('Default date set to today');
-            }
+            const isTooLate = now.getHours() > 21 || (now.getHours() === 21 && now.getMinutes() >= 30);
+            const targetDate = new Date(now);
+            if (isTooLate) targetDate.setDate(targetDate.getDate() + 1);
+            // פורמט YYYY-MM-DD לפי שעון מקומי
+            const y = targetDate.getFullYear();
+            const mo = String(targetDate.getMonth() + 1).padStart(2, '0');
+            const d = String(targetDate.getDate()).padStart(2, '0');
+            dateInput.value = `${y}-${mo}-${d}`;
+            addLog(isTooLate ? 'Default date set to tomorrow (after 21:30)' : 'Default date set to today');
 
             await loadResources();
             setupSignatureCanvas();
