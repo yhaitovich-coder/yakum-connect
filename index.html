@@ -565,7 +565,9 @@
         const { data, error } = await supa
             .from('resources')
             .select('*')
-            .order('name');
+            .eq('is_active', true)
+            .order('display_order', { ascending: true })
+            .order('name', { ascending: true });
 
         if (error) {
             addLog('✗ loadResources error: ' + error.message, 'ERROR');
