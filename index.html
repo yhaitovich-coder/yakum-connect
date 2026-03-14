@@ -801,6 +801,17 @@
 
             addLog('STEP 3: Generating multi-page PDF...');
             
+            // המתן לטעינת הלוגו לפני יצירת ה-PDF
+            const logoImg = document.querySelector('#pdf-page1 img');
+            if (logoImg) {
+                await new Promise(resolve => {
+                    if (logoImg.complete && logoImg.naturalWidth > 0) { resolve(); return; }
+                    logoImg.onload = resolve;
+                    logoImg.onerror = resolve;
+                    setTimeout(resolve, 3000);
+                });
+            }
+            
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF({
                 orientation: 'p',
@@ -808,9 +819,17 @@
                 format: 'a4'
             });
 
+            const html2canvasOpts = { 
+                scale: 1.5, 
+                logging: false, 
+                useCORS: true, 
+                allowTaint: true,
+                backgroundColor: '#ffffff'
+            };
+
             // רנדור עמוד 1
             const page1Element = document.getElementById('pdf-page1');
-            const canvas1 = await html2canvas(page1Element, { scale: 1.5, logging: false });
+            const canvas1 = await html2canvas(page1Element, html2canvasOpts);
             const img1Data = canvas1.toDataURL('image/png');
             const page1Height = (canvas1.height * 210) / canvas1.width;
             
@@ -831,7 +850,7 @@
             // עמוד חתימה (תמיד בעמוד חדש)
             pdf.addPage();
             const sigPageElement = document.getElementById('pdf-signature-page');
-            const canvasSig = await html2canvas(sigPageElement, { scale: 1.5, logging: false });
+            const canvasSig = await html2canvas(sigPageElement, html2canvasOpts);
             const imgSigData = canvasSig.toDataURL('image/png');
             pdf.addImage(imgSigData, 'PNG', 0, 0, 210, 297);
 
