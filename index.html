@@ -264,22 +264,28 @@
         .modal {
             display: none;
             position: fixed;
-            z-index: 1000;
-            inset: 0;
-            background: rgba(0,0,0,0.6);
-            padding: 16px;
+            z-index: 99999;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         .modal-content {
             background: #fff;
-            margin: auto;
-            width: 100%;
+            margin: 20px auto;
+            width: calc(100% - 32px);
             max-width: 460px;
             border-radius: 15px;
             text-align: right;
             display: flex;
             flex-direction: column;
-            max-height: 88vh;
+            max-height: calc(100vh - 40px);
+            position: relative;
         }
         .modal-header {
             padding: 15px 18px;
