@@ -327,11 +327,10 @@
 
         /* ===== PDF TEMPLATES (off-screen) ===== */
         #pdf-page1, #pdf-signature-page {
-            position: fixed;
+            position: absolute;
             top: -9999px;
             left: -9999px;
             pointer-events: none;
-            opacity: 0;
         }
         #pdf-page1 {
             width: 750px;
@@ -821,9 +820,7 @@
 
             const html2canvasOpts = { 
                 scale: 1.5, 
-                logging: false, 
-                useCORS: true, 
-                allowTaint: true,
+                logging: false,
                 backgroundColor: '#ffffff'
             };
 
