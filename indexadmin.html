@@ -263,25 +263,53 @@
     const tog=document.createElement('button'); tog.className='toggle'; tog.textContent='▲';
     const hid=document.createElement('button'); hid.className='btn danger small'; hid.textContent='הסתר משאב';
     const body=document.createElement('div'); body.className='res-body';
-    const wrap=document.createElement('div'); wrap.className='cal-wrap';
-    const tbl=document.createElement('table'), thead=document.createElement('thead'), trh=document.createElement('tr');
-    for(const d of cols){ const th=document.createElement('th'); th.innerHTML=`${d.setLocale('he').toFormat('cccc')}<span class="day-sub">${d.toFormat('dd/LL')}</span>`; trh.appendChild(th); }
-    thead.appendChild(trh); tbl.appendChild(thead);
-    const tbody=document.createElement('tbody'), tr=document.createElement('tr');
     const today=DateTime.now().setZone(TIMEZONE).startOf('day');
-    for(const day of cols){
-      const td=document.createElement('td'), items=grouped.get(fmtDay(day))||[];
-      if(!items.length){ const em=document.createElement('div'); em.className='empty'; em.textContent='—'; td.appendChild(em); }
-      else items.forEach((b,j)=>{
-        const s=DateTime.fromISO(b.start_time,{zone:TIMEZONE}), e=DateTime.fromISO(b.end_time,{zone:TIMEZONE});
-        const sl=document.createElement('div'); sl.className='slot '+(j%2===0?'badge1':'badge2');
-        if(s<today) sl.classList.add('past');
-        sl.innerHTML=`<div><span class="t">${fmtTime(s)}–${fmtTime(e)}</span> • <span class="n">${escapeHtml(b.full_name||'')}</span></div><div class="m">${escapeHtml([b.phone,b.email].filter(Boolean).join(' | '))}</div>`;
-        sl.addEventListener('click',()=>openBookingModal(b,r.name)); td.appendChild(sl);
-      });
-      tr.appendChild(td);
+
+    if(viewMode==='month'){
+      // תצוגת רשימה לחודש
+      const listWrap=document.createElement('div');
+      listWrap.style.cssText='display:grid;gap:6px;';
+      let hasAny=false;
+      for(const day of cols){
+        const items=grouped.get(fmtDay(day))||[];
+        if(!items.length) continue;
+        hasAny=true;
+        const dayLabel=document.createElement('div');
+        dayLabel.style.cssText='font-weight:bold;font-size:0.88rem;color:#34495e;margin-top:8px;padding-bottom:2px;border-bottom:1px solid #eee;';
+        dayLabel.textContent=day.setLocale('he').toFormat('cccc dd/LL');
+        listWrap.appendChild(dayLabel);
+        items.forEach((b,j)=>{
+          const s=DateTime.fromISO(b.start_time,{zone:TIMEZONE}), e=DateTime.fromISO(b.end_time,{zone:TIMEZONE});
+          const sl=document.createElement('div'); sl.className='slot '+(j%2===0?'badge1':'badge2');
+          if(s<today) sl.classList.add('past');
+          sl.innerHTML=`<div><span class="t">${fmtTime(s)}–${fmtTime(e)}</span> • <span class="n">${escapeHtml(b.full_name||'')}</span></div><div class="m">${escapeHtml([b.phone,b.email].filter(Boolean).join(' | '))}</div>`;
+          sl.addEventListener('click',()=>openBookingModal(b,r.name)); listWrap.appendChild(sl);
+        });
+      }
+      if(!hasAny){ const em=document.createElement('div'); em.className='empty'; em.style.padding='12px 0'; em.textContent='אין הזמנות בחודש זה'; listWrap.appendChild(em); }
+      body.appendChild(listWrap);
+    } else {
+      // תצוגת טבלה לשבוע
+      const wrap=document.createElement('div'); wrap.className='cal-wrap';
+      const tbl=document.createElement('table'), thead=document.createElement('thead'), trh=document.createElement('tr');
+      for(const d of cols){ const th=document.createElement('th'); th.innerHTML=`${d.setLocale('he').toFormat('cccc')}<span class="day-sub">${d.toFormat('dd/LL')}</span>`; trh.appendChild(th); }
+      thead.appendChild(trh); tbl.appendChild(thead);
+      const tbody=document.createElement('tbody'), tr=document.createElement('tr');
+      for(const day of cols){
+        const td=document.createElement('td'), items=grouped.get(fmtDay(day))||[];
+        if(!items.length){ const em=document.createElement('div'); em.className='empty'; em.textContent='—'; td.appendChild(em); }
+        else items.forEach((b,j)=>{
+          const s=DateTime.fromISO(b.start_time,{zone:TIMEZONE}), e=DateTime.fromISO(b.end_time,{zone:TIMEZONE});
+          const sl=document.createElement('div'); sl.className='slot '+(j%2===0?'badge1':'badge2');
+          if(s<today) sl.classList.add('past');
+          sl.innerHTML=`<div><span class="t">${fmtTime(s)}–${fmtTime(e)}</span> • <span class="n">${escapeHtml(b.full_name||'')}</span></div><div class="m">${escapeHtml([b.phone,b.email].filter(Boolean).join(' | '))}</div>`;
+          sl.addEventListener('click',()=>openBookingModal(b,r.name)); td.appendChild(sl);
+        });
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr); tbl.appendChild(tbody); wrap.appendChild(tbl); body.appendChild(wrap);
     }
-    tbody.appendChild(tr); tbl.appendChild(tbody); wrap.appendChild(tbl); body.appendChild(wrap);
+
     tog.addEventListener('click',()=>{ const h=body.classList.toggle('hidden'); tog.textContent=h?'▼':'▲'; });
     hid.addEventListener('click',()=>{ if(!confirm(`להסתיר את "${r.name}"?`)) return; hiddenResources.add(resId); saveHiddenSet(hiddenResources); render(); });
     acts.appendChild(tog); acts.appendChild(hid); head.appendChild(title); head.appendChild(acts); card.appendChild(head); card.appendChild(body);
