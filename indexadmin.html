@@ -63,6 +63,7 @@
       <button class="btn primary" id="btnRefresh">רענון 🔄</button>
       <button class="btn" id="btnShowAll">הצג את כל המשאבים 👁️</button>
       <button class="btn" id="btnManageResources" style="background:#8e44ad;color:#fff;border-color:#8e44ad;">⚙️ ניהול משאבים</button>
+      <button class="btn" id="btnRecurring" style="background:#e67e22;color:#fff;border-color:#e67e22;">🔁 הזמנות חוזרות</button>
     </div>
   </header>
 
@@ -407,6 +408,107 @@
   document.getElementById('modalEditResourceClose').addEventListener('click',()=>document.getElementById('modalEditResource').style.display='none');
   window.editResource=editResource; window.toggleResource=toggleResource; window.deleteResource=deleteResource;
 
+  // ===== הזמנות חוזרות =====
+  const DAY_NAMES = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+
+  function openRecurring(){ document.getElementById('modalRecurring').style.display='block'; populateRecurringResources(); }
+  function closeRecurring(){ document.getElementById('modalRecurring').style.display='none'; }
+
+  function populateRecurringResources(){
+    const sel=document.getElementById('recResource');
+    sel.innerHTML='<option value="">-- בחר משאב --</option>';
+    for(const r of resources){ const o=document.createElement('option'); o.value=r.id; o.textContent=r.name; sel.appendChild(o); }
+  }
+
+  function updateRecurringUI(){
+    const type=document.getElementById('recType').value;
+    document.getElementById('recDayOfWeekRow').style.display=(type==='weekly'||type==='biweekly')?'flex':'none';
+    document.getElementById('recDayOfMonthRow').style.display=(type==='monthly'||type==='yearly')?'flex':'none';
+    document.getElementById('recMonthRow').style.display=(type==='yearly')?'flex':'none';
+  }
+
+  async function createRecurringBookings(){
+    const resourceId=document.getElementById('recResource').value;
+    const title=document.getElementById('recTitle').value.trim();
+    const type=document.getElementById('recType').value;
+    const startDate=document.getElementById('recStartDate').value;
+    const endDate=document.getElementById('recEndDate').value;
+    const startTime=document.getElementById('recStartTime').value;
+    const endTime=document.getElementById('recEndTime').value;
+    const dayOfWeek=parseInt(document.getElementById('recDayOfWeek').value); // 0=ראשון
+    const dayOfMonth=parseInt(document.getElementById('recDayOfMonth').value);
+    const month=parseInt(document.getElementById('recMonth').value); // 1-12
+
+    if(!resourceId||!title||!startDate||!endDate||!startTime||!endTime){
+      alert('יש למלא את כל השדות'); return;
+    }
+    if(endDate<=startDate){ alert('תאריך סיום חייב להיות אחרי תאריך התחלה'); return; }
+
+    const btn=document.getElementById('btnCreateRecurring');
+    btn.disabled=true; btn.textContent='⏳ יוצר הזמנות...';
+
+    const res=resources.find(r=>r.id===resourceId);
+    const bookingsToCreate=[];
+    let current=DateTime.fromISO(startDate,{zone:TIMEZONE});
+    const end=DateTime.fromISO(endDate,{zone:TIMEZONE});
+    let count=0;
+
+    while(current<=end && count<500){
+      let match=false;
+      const dow=current.weekday===7?0:current.weekday; // luxon: 1=Mon..7=Sun → 0=Sun..6=Sat
+
+      if(type==='weekly') match=(dow===dayOfWeek);
+      else if(type==='biweekly'){
+        // חישוב שבועות מאז תאריך התחלה
+        const refSunday=DateTime.fromISO(startDate,{zone:TIMEZONE});
+        const weeksDiff=Math.round(current.diff(refSunday,'weeks').weeks);
+        match=(dow===dayOfWeek)&&(weeksDiff%2===0);
+      }
+      else if(type==='monthly') match=(current.day===dayOfMonth);
+      else if(type==='yearly') match=(current.day===dayOfMonth&&current.month===month);
+
+      if(match){
+        bookingsToCreate.push({
+          resource_id: resourceId,
+          full_name: title,
+          email: 'admin@yakum.org.il',
+          phone: '---',
+          start_time: `${current.toFormat('yyyy-LL-dd')}T${startTime}:00`,
+          end_time:   `${current.toFormat('yyyy-LL-dd')}T${endTime}:00`,
+          signature_data: null,
+          status: 'admin_block'
+        });
+        count++;
+      }
+      current=current.plus({days:1});
+    }
+
+    if(bookingsToCreate.length===0){ alert('לא נמצאו תאריכים מתאימים בטווח הנבחר'); btn.disabled=false; btn.textContent='✅ צור הזמנות'; return; }
+
+    addLog(`יוצר ${bookingsToCreate.length} הזמנות חוזרות למשאב "${res?.name}"...`);
+
+    // הכנס ב-chunks של 50
+    let inserted=0;
+    for(let i=0;i<bookingsToCreate.length;i+=50){
+      const chunk=bookingsToCreate.slice(i,i+50);
+      const { error }=await supa.from('bookings').insert(chunk);
+      if(error){ addLog('שגיאה: '+error.message,'ERROR'); alert('שגיאה: '+error.message); break; }
+      inserted+=chunk.length;
+    }
+
+    addLog(`✓ נוצרו ${inserted} הזמנות חוזרות בהצלחה`);
+    alert(`✅ נוצרו ${inserted} הזמנות חוזרות למשאב "${res?.name}"`);
+    btn.disabled=false; btn.textContent='✅ צור הזמנות';
+    closeRecurring();
+    await refresh();
+  }
+
+  document.getElementById('btnRecurring').addEventListener('click', openRecurring);
+  document.getElementById('modalRecurringClose').addEventListener('click', closeRecurring);
+  document.getElementById('modalRecurring').addEventListener('click',e=>{ if(e.target===document.getElementById('modalRecurring')) closeRecurring(); });
+  document.getElementById('recType').addEventListener('change', updateRecurringUI);
+  document.getElementById('btnCreateRecurring').addEventListener('click', createRecurringBookings);
+
   // ===== Init =====
   (async function init(){
     addLog('=== יקום Connect אדמין מאותחל ===');
@@ -414,5 +516,74 @@
     catch(err){ addLog('שגיאה: '+(err?.message||err),'ERROR'); alert('שגיאה באתחול: '+(err?.message||err)); }
   })();
 </script>
+
+<!-- Modal הזמנות חוזרות -->
+<div class="modal" id="modalRecurring">
+  <div class="modal-card" style="max-width:600px;">
+    <div class="modal-head" style="background:#fef3e2;">
+      <span>🔁 יצירת הזמנות חוזרות</span>
+      <button class="x" id="modalRecurringClose">✕</button>
+    </div>
+    <div class="modal-body" style="white-space:normal;">
+      <div style="display:grid;gap:14px;">
+
+        <div><label style="font-weight:bold;display:block;margin-bottom:4px;">משאב *</label>
+          <select id="recResource" style="padding:10px;border:1px solid #ddd;border-radius:8px;font-size:1rem;width:100%;direction:rtl;"></select></div>
+
+        <div><label style="font-weight:bold;display:block;margin-bottom:4px;">שם / תיאור ההזמנה *</label>
+          <input id="recTitle" type="text" placeholder='לדוגמה: "הרצאה שבועית"' style="padding:10px;border:1px solid #ddd;border-radius:8px;font-size:1rem;width:100%;box-sizing:border-box;direction:rtl;"></div>
+
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:120px;"><label style="font-weight:bold;display:block;margin-bottom:4px;">שעת התחלה *</label>
+            <input id="recStartTime" type="time" style="padding:10px;border:1px solid #ddd;border-radius:8px;font-size:1rem;width:100%;"></div>
+          <div style="flex:1;min-width:120px;"><label style="font-weight:bold;display:block;margin-bottom:4px;">שעת סיום *</label>
+            <input id="recEndTime" type="time" style="padding:10px;border:1px solid #ddd;border-radius:8px;font-size:1rem;width:100%;"></div>
+        </div>
+
+        <div><label style="font-weight:bold;display:block;margin-bottom:4px;">סוג חזרתיות *</label>
+          <select id="recType" style="padding:10px;border:1px solid #ddd;border-radius:8px;font-size:1rem;width:100%;direction:rtl;">
+            <option value="weekly">שבועית (כל שבוע)</option>
+            <option value="biweekly">דו-שבועית (כל שבועיים)</option>
+            <option value="monthly">חודשית (יום קבוע בחודש)</option>
+            <option value="yearly">שנתית (תאריך קבוע)</option>
+          </select></div>
+
+        <div id="recDayOfWeekRow" style="display:flex;align-items:center;gap:10px;">
+          <label style="font-weight:bold;white-space:nowrap;">יום בשבוע:</label>
+          <select id="recDayOfWeek" style="padding:10px;border:1px solid #ddd;border-radius:8px;font-size:1rem;flex:1;direction:rtl;">
+            <option value="0">ראשון</option><option value="1">שני</option><option value="2">שלישי</option>
+            <option value="3">רביעי</option><option value="4">חמישי</option><option value="5">שישי</option><option value="6">שבת</option>
+          </select></div>
+
+        <div id="recDayOfMonthRow" style="display:none;align-items:center;gap:10px;">
+          <label style="font-weight:bold;white-space:nowrap;">יום בחודש:</label>
+          <input id="recDayOfMonth" type="number" min="1" max="31" value="1" style="padding:10px;border:1px solid #ddd;border-radius:8px;font-size:1rem;width:80px;"></div>
+
+        <div id="recMonthRow" style="display:none;align-items:center;gap:10px;">
+          <label style="font-weight:bold;white-space:nowrap;">חודש:</label>
+          <select id="recMonth" style="padding:10px;border:1px solid #ddd;border-radius:8px;font-size:1rem;flex:1;direction:rtl;">
+            <option value="1">ינואר</option><option value="2">פברואר</option><option value="3">מרץ</option><option value="4">אפריל</option>
+            <option value="5">מאי</option><option value="6">יוני</option><option value="7">יולי</option><option value="8">אוגוסט</option>
+            <option value="9">ספטמבר</option><option value="10">אוקטובר</option><option value="11">נובמבר</option><option value="12">דצמבר</option>
+          </select></div>
+
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:140px;"><label style="font-weight:bold;display:block;margin-bottom:4px;">מתאריך *</label>
+            <input id="recStartDate" type="date" style="padding:10px;border:1px solid #ddd;border-radius:8px;font-size:1rem;width:100%;"></div>
+          <div style="flex:1;min-width:140px;"><label style="font-weight:bold;display:block;margin-bottom:4px;">עד תאריך *</label>
+            <input id="recEndDate" type="date" style="padding:10px;border:1px solid #ddd;border-radius:8px;font-size:1rem;width:100%;"></div>
+        </div>
+
+        <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px;font-size:0.88rem;color:#856404;">
+          ⚠️ ההזמנות ייווצרו כחסימות אדמין ויחסמו את הזמן לציבור. ניתן למחוק כל אחת בנפרד מהתצוגה.
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button id="btnCreateRecurring" class="btn primary" style="background:#e67e22;border-color:#e67e22;">✅ צור הזמנות</button>
+      <button class="btn" onclick="closeRecurring()">ביטול</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
