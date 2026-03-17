@@ -3,335 +3,61 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>יקום - אדמין (משאבים אחד מתחת לשני)</title>
-
-  <!-- Supabase v2 -->
+  <title>יקום - אדמין</title>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-
-  <!-- Luxon (חישובי שבוע/ימים) -->
   <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
-
   <style>
-    :root{
-      --primary:#2ecc71;
-      --primary2:#1d6f42;
-      --bg:#f4f7f6;
-      --card:#fff;
-      --line:#e6e6e6;
-      --head:#f8f9fa;
-      --muted:#7f8c8d;
-      --chip:#e8f5e9;
-      --danger:#e74c3c;
-      --booking:#3498db;
-      --booking2:#9b59b6;
-    }
-
-    body{
-      font-family:'Segoe UI',Tahoma,sans-serif;
-      background:var(--bg);
-      margin:0;
-      padding:18px;
-      direction:rtl;
-      color:#2c3e50;
-    }
-
-    .admin-container{
-      max-width: 1400px;
-      margin:auto;
-      background:var(--card);
-      padding:22px;
-      border-radius:16px;
-      box-shadow:0 5px 20px rgba(0,0,0,0.06);
-    }
-
-    header{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      border-bottom:2px solid var(--primary);
-      margin-bottom:16px;
-      padding-bottom:12px;
-      gap:12px;
-      flex-wrap:wrap;
-    }
-    .admin-logo{max-width:140px;height:auto;}
-    header h1{margin:0;font-size:1.35rem;}
-
-    .btn{
-      padding:9px 14px;
-      border:1px solid var(--primary);
-      background:#fff;
-      color:var(--primary2);
-      border-radius:10px;
-      cursor:pointer;
-      font-weight:700;
-      transition:.15s;
-      white-space:nowrap;
-    }
-    .btn:hover{transform:translateY(-1px);}
-    .btn.primary{
-      background:var(--primary2);
-      border-color:var(--primary2);
-      color:#fff;
-    }
-    .btn.active{
-      background:var(--primary);
-      border-color:var(--primary);
-      color:#fff;
-    }
-    .btn.danger{
-      background:#fff;
-      border-color:var(--danger);
-      color:var(--danger);
-    }
-    .btn.small{padding:7px 10px; font-size:0.85rem; border-radius:9px;}
-
-    .controls{
-      background:#f9f9f9;
-      border:1px solid var(--line);
-      padding:14px;
-      border-radius:14px;
-      margin-bottom:18px;
-    }
-
-    .controls-row{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:12px;
-      flex-wrap:wrap;
-    }
-
-    .seg{display:flex; gap:8px; flex-wrap:wrap;}
-    .field{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
-
-    label.small{
-      font-weight:700;
-      color:#2c3e50;
-      background:var(--chip);
-      border:1px solid var(--primary);
-      padding:8px 10px;
-      border-radius:10px;
-      display:flex;
-      align-items:center;
-      gap:8px;
-      user-select:none;
-    }
-
-    input[type="text"]{
-      padding:10px 12px;
-      border:1px solid #ddd;
-      border-radius:10px;
-      font-family:inherit;
-      background:#fff;
-      min-width:260px;
-    }
-
-    .hint{
-      color:var(--muted);
-      font-size:0.85rem;
-      margin-top:10px;
-      line-height:1.35;
-    }
-
-    .stats-bar{
-      display:flex;
-      gap:12px;
-      margin:14px 0 18px;
-      flex-wrap:wrap;
-    }
-    .stat-card{
-      flex:1;
-      min-width:220px;
-      background:#fff;
-      border:1px solid var(--line);
-      padding:14px;
-      border-radius:14px;
-      text-align:center;
-    }
-    .stat-card h3{margin:0;color:#34495e;font-size:0.95rem;}
-    .stat-card p{margin:6px 0 0;font-size:1.5rem;font-weight:800;color:var(--primary);}
-
-    /* Resource accordion */
+    :root{ --primary:#2ecc71; --primary2:#1d6f42; --bg:#f4f7f6; --card:#fff; --line:#e6e6e6; --head:#f8f9fa; --muted:#7f8c8d; --chip:#e8f5e9; --danger:#e74c3c; --booking:#3498db; --booking2:#9b59b6; }
+    body{ font-family:'Segoe UI',Tahoma,sans-serif; background:var(--bg); margin:0; padding:18px; direction:rtl; color:#2c3e50; }
+    .admin-container{ max-width:1400px; margin:auto; background:var(--card); padding:22px; border-radius:16px; box-shadow:0 5px 20px rgba(0,0,0,0.06); }
+    header{ display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--primary); margin-bottom:16px; padding-bottom:12px; gap:12px; flex-wrap:wrap; }
+    .admin-logo{max-width:140px;height:auto;} header h1{margin:0;font-size:1.35rem;}
+    .btn{ padding:9px 14px; border:1px solid var(--primary); background:#fff; color:var(--primary2); border-radius:10px; cursor:pointer; font-weight:700; transition:.15s; white-space:nowrap; }
+    .btn:hover{transform:translateY(-1px);} .btn.primary{ background:var(--primary2); border-color:var(--primary2); color:#fff; }
+    .btn.active{ background:var(--primary); border-color:var(--primary); color:#fff; } .btn.danger{ background:#fff; border-color:var(--danger); color:var(--danger); } .btn.small{padding:7px 10px; font-size:0.85rem; border-radius:9px;}
+    .controls{ background:#f9f9f9; border:1px solid var(--line); padding:14px; border-radius:14px; margin-bottom:18px; }
+    .controls-row{ display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+    .seg{display:flex; gap:8px; flex-wrap:wrap;} .field{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+    label.small{ font-weight:700; color:#2c3e50; background:var(--chip); border:1px solid var(--primary); padding:8px 10px; border-radius:10px; display:flex; align-items:center; gap:8px; user-select:none; }
+    input[type="text"]{ padding:10px 12px; border:1px solid #ddd; border-radius:10px; font-family:inherit; background:#fff; min-width:260px; }
+    .hint{ color:var(--muted); font-size:0.85rem; margin-top:10px; line-height:1.35; }
+    .stats-bar{ display:flex; gap:12px; margin:14px 0 18px; flex-wrap:wrap; }
+    .stat-card{ flex:1; min-width:220px; background:#fff; border:1px solid var(--line); padding:14px; border-radius:14px; text-align:center; }
+    .stat-card h3{margin:0;color:#34495e;font-size:0.95rem;} .stat-card p{margin:6px 0 0;font-size:1.5rem;font-weight:800;color:var(--primary);}
     .resource-list{display:flex; flex-direction:column; gap:12px; margin-top:10px;}
-    .res-card{
-      border:1px solid var(--line);
-      border-radius:16px;
-      overflow:hidden;
-      background:#fff;
-    }
-    .res-head{
-      background:var(--head);
-      padding:12px 14px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-    .res-title{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      font-weight:900;
-      font-size:1.05rem;
-    }
-    .pill{
-      background:var(--chip);
-      border:1px solid var(--primary);
-      color:#1d6f42;
-      padding:4px 10px;
-      border-radius:999px;
-      font-weight:800;
-      font-size:0.85rem;
-      white-space:nowrap;
-    }
+    .res-card{ border:1px solid var(--line); border-radius:16px; overflow:hidden; background:#fff; }
+    .res-head{ background:var(--head); padding:12px 14px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+    .res-title{ display:flex; align-items:center; gap:10px; font-weight:900; font-size:1.05rem; }
+    .pill{ background:var(--chip); border:1px solid var(--primary); color:#1d6f42; padding:4px 10px; border-radius:999px; font-weight:800; font-size:0.85rem; white-space:nowrap; }
     .res-actions{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
-    .toggle{
-      border:none;
-      background:transparent;
-      font-size:1.1rem;
-      cursor:pointer;
-      font-weight:900;
-      color:#2c3e50;
-    }
-    .res-body{
-      padding:12px 14px 16px;
-      display:block;
-    }
-    .res-body.hidden{display:none;}
-
-    /* mini calendar table inside each resource */
-    .cal-wrap{
-      border:1px solid var(--line);
-      border-radius:14px;
-      overflow:auto;
-      background:#fff;
-    }
-    table{
-      border-collapse:collapse;
-      width:100%;
-      min-width: 900px;
-    }
-    th, td{
-      border-bottom:1px solid var(--line);
-      border-left:1px solid var(--line);
-      padding:10px;
-      vertical-align:top;
-      background:#fff;
-    }
-    th{
-      position:sticky;
-      top:0;
-      background:var(--head);
-      z-index:2;
-      text-align:center;
-      font-weight:900;
-    }
-
-    .day-sub{
-      display:block;
-      font-weight:600;
-      font-size:0.8rem;
-      color:var(--muted);
-      margin-top:4px;
-    }
-
-    .slot{
-      border:1px solid #dfe6e9;
-      border-radius:10px;
-      padding:8px 10px;
-      margin:6px 0;
-      cursor:pointer;
-      background:#fff;
-      transition:.12s;
-      font-size:0.88rem;
-    }
+    .toggle{ border:none; background:transparent; font-size:1.1rem; cursor:pointer; font-weight:900; color:#2c3e50; }
+    .res-body{ padding:12px 14px 16px; display:block; } .res-body.hidden{display:none;}
+    .cal-wrap{ border:1px solid var(--line); border-radius:14px; overflow:auto; background:#fff; }
+    table{ border-collapse:collapse; width:100%; min-width:900px; }
+    th, td{ border-bottom:1px solid var(--line); border-left:1px solid var(--line); padding:10px; vertical-align:top; background:#fff; }
+    th{ position:sticky; top:0; background:var(--head); z-index:2; text-align:center; font-weight:900; }
+    .day-sub{ display:block; font-weight:600; font-size:0.8rem; color:var(--muted); margin-top:4px; }
+    .slot{ border:1px solid #dfe6e9; border-radius:10px; padding:8px 10px; margin:6px 0; cursor:pointer; background:#fff; transition:.12s; font-size:0.88rem; }
     .slot:hover{transform:translateY(-1px); box-shadow:0 6px 14px rgba(0,0,0,0.06);}
-    .slot .t{font-weight:900;}
-    .slot .n{color:#2c3e50; font-weight:700;}
-    .slot .m{color:var(--muted); font-size:0.78rem; margin-top:2px;}
-    .slot.badge1{border-right:6px solid var(--booking);}
-    .slot.badge2{border-right:6px solid var(--booking2);}
-    .slot.past{opacity:0.55;}
-    .empty{color:var(--muted); font-size:0.85rem;}
-
-    /* Modal */
-    .modal{
-      display:none;
-      position:fixed;
-      inset:0;
-      background:rgba(0,0,0,0.55);
-      z-index:1000;
-      padding:18px;
-    }
-    .modal-card{
-      max-width:520px;
-      margin:4vh auto;
-      background:#fff;
-      border-radius:16px;
-      overflow:hidden;
-      box-shadow:0 10px 40px rgba(0,0,0,0.25);
-      display:flex;
-      flex-direction:column;
-    }
-    .modal-head{
-      padding:14px 16px;
-      background:var(--head);
-      border-bottom:1px solid var(--line);
-      font-weight:900;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-    }
-    .modal-body{
-      padding:16px;
-      line-height:1.5;
-      overflow:auto;
-      max-height: 70vh;
-      white-space:pre-wrap;
-    }
-    .modal-actions{
-      padding:14px 16px;
-      border-top:1px solid var(--line);
-      display:flex;
-      gap:10px;
-      justify-content:flex-start;
-      flex-wrap:wrap;
-    }
-    .x{
-      cursor:pointer;
-      font-weight:900;
-      color:#555;
-      border:none;
-      background:transparent;
-      font-size:1.1rem;
-    }
-    .kv{
-      display:grid;
-      grid-template-columns: 120px 1fr;
-      gap:8px 10px;
-      margin-top:10px;
-      font-size:0.95rem;
-    }
-    .kv b{color:#34495e;}
-    a{color:#2980b9; text-decoration:none;}
-    a:hover{text-decoration:underline;}
-    .note{font-size:0.85rem;color:var(--muted);margin-top:10px;}
-
-    @media (max-width: 720px){
-      input[type="text"]{min-width:200px;}
-      table{min-width: 780px;}
-    }
+    .slot .t{font-weight:900;} .slot .n{color:#2c3e50; font-weight:700;} .slot .m{color:var(--muted); font-size:0.78rem; margin-top:2px;}
+    .slot.badge1{border-right:6px solid var(--booking);} .slot.badge2{border-right:6px solid var(--booking2);} .slot.past{opacity:0.55;} .empty{color:var(--muted); font-size:0.85rem;}
+    .modal{ display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:1000; padding:18px; overflow-y:auto; }
+    .modal-card{ max-width:520px; margin:4vh auto; background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.25); display:flex; flex-direction:column; }
+    .modal-head{ padding:14px 16px; background:var(--head); border-bottom:1px solid var(--line); font-weight:900; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .modal-body{ padding:16px; line-height:1.5; overflow:auto; max-height:70vh; white-space:pre-wrap; }
+    .modal-actions{ padding:14px 16px; border-top:1px solid var(--line); display:flex; gap:10px; justify-content:flex-start; flex-wrap:wrap; }
+    .x{ cursor:pointer; font-weight:900; color:#555; border:none; background:transparent; font-size:1.1rem; }
+    .kv{ display:grid; grid-template-columns:120px 1fr; gap:8px 10px; margin-top:10px; font-size:0.95rem; }
+    .kv b{color:#34495e;} a{color:#2980b9; text-decoration:none;} a:hover{text-decoration:underline;} .note{font-size:0.85rem;color:var(--muted);margin-top:10px;}
+    .debug-section{ margin-top:18px; border-radius:8px; overflow:hidden; border:1px solid #2c3e50; }
+    .debug-header{ background:#2c3e50; color:#ecf0f1; padding:8px 12px; font-size:11px; font-weight:bold; display:flex; justify-content:space-between; align-items:center; }
+    @media (max-width:720px){ input[type="text"]{min-width:200px;} table{min-width:780px;} }
   </style>
 </head>
-
 <body>
 <div class="admin-container">
   <header>
-    <img src="https://jqddombezqqvdcxqlife.supabase.co/storage/v1/object/public/contracts/Yakum%20final%20logo-02.jpg"
-         class="admin-logo" alt="לוגו יקום">
+    <img src="https://jqddombezqqvdcxqlife.supabase.co/storage/v1/object/public/contracts/Yakum%20final%20logo-02.jpg" class="admin-logo" alt="לוגו יקום">
     <h1>ניהול יקום – משאבים אחד מתחת לשני</h1>
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
       <button class="btn primary" id="btnRefresh">רענון 🔄</button>
@@ -352,36 +78,36 @@
         <button class="btn active" id="btnWeek">שבוע (א׳–ש׳)</button>
         <button class="btn" id="btnLast30">30 ימים אחרונים</button>
       </div>
-
       <div class="field">
-        <button class="btn" id="btnPrev">◀ קודם</button>
+        <button class="btn" id="btnPrev">קודם ▶</button>
         <button class="btn" id="btnToday">היום</button>
-        <button class="btn" id="btnNext">הבא ▶</button>
-
+        <button class="btn" id="btnNext">◀ הבא</button>
         <input id="searchBox" type="text" placeholder="חיפוש: שם/אימייל/טלפון" />
-        <label class="small">
-          <input type="checkbox" id="hidePast" checked />
-          אל תציג לפני היום
-        </label>
+        <label class="small"><input type="checkbox" id="hidePast" checked />אל תציג לפני היום</label>
       </div>
     </div>
-
-    <div class="hint">
-      • כל משאב מוצג ככרטיס. ניתן <b>לכווץ</b> (▼) או <b>להסתיר</b> לחלוטין (נשמר בדפדפן).<br/>
-      • לחיצה על אירוע פותחת חלון פרטים + מחיקה. (אין PDF ב-DB; יש קישור חתימה אם קיים).
-    </div>
+    <div class="hint">• כל משאב מוצג ככרטיס. ניתן <b>לכווץ</b> (▼) או <b>להסתיר</b> לחלוטין (נשמר בדפדפן).<br/>• לחיצה על אירוע פותחת חלון פרטים + מחיקה.</div>
   </div>
 
   <div id="resourceList" class="resource-list"></div>
+
+  <!-- לוג דיבאג -->
+  <div class="debug-section">
+    <div class="debug-header">
+      <span>🔍 לוג מערכת אדמין</span>
+      <div style="display:flex;gap:6px;">
+        <button id="btnCopyLog" style="background:#2980b9;color:#fff;font-size:10px;border:none;padding:5px 8px;cursor:pointer;border-radius:4px;">📋 העתק ללוג</button>
+        <button id="btnClearLog" style="background:#7f8c8d;color:#fff;font-size:10px;border:none;padding:5px 8px;cursor:pointer;border-radius:4px;">🗑 נקה</button>
+      </div>
+    </div>
+    <div id="debug-log" style="background:#000;color:#0f0;font-family:'Courier New',monospace;font-size:10px;padding:10px;max-height:150px;overflow-y:auto;white-space:pre-line;direction:ltr;text-align:left;"></div>
+  </div>
 </div>
 
-<!-- Modal -->
+<!-- Modal הזמנה -->
 <div class="modal" id="modal">
   <div class="modal-card">
-    <div class="modal-head">
-      <span id="modalTitle">פרטי הזמנה</span>
-      <button class="x" id="modalClose">✕</button>
-    </div>
+    <div class="modal-head"><span id="modalTitle">פרטי הזמנה</span><button class="x" id="modalClose">✕</button></div>
     <div class="modal-body" id="modalBody"></div>
     <div class="modal-actions" id="modalActions"></div>
   </div>
@@ -390,10 +116,7 @@
 <!-- Modal ניהול משאבים -->
 <div class="modal" id="modalResources">
   <div class="modal-card" style="max-width:680px;">
-    <div class="modal-head" style="background:#f3e5f5;">
-      <span>⚙️ ניהול משאבים</span>
-      <button class="x" id="modalResourcesClose">✕</button>
-    </div>
+    <div class="modal-head" style="background:#f3e5f5;"><span>⚙️ ניהול משאבים</span><button class="x" id="modalResourcesClose">✕</button></div>
     <div class="modal-body" style="padding:0;">
       <div style="padding:16px;border-bottom:2px solid #e8d5f5;background:#faf5ff;">
         <h3 style="margin:0 0 12px;color:#8e44ad;">➕ הוסף משאב חדש</h3>
@@ -403,10 +126,7 @@
           <button id="btnAddResource" class="btn primary" style="background:#8e44ad;border-color:#8e44ad;">➕ הוסף משאב</button>
         </div>
       </div>
-      <div style="padding:16px;">
-        <h3 style="margin:0 0 12px;color:#2c3e50;">📋 משאבים קיימים</h3>
-        <div id="resourceManagerList" style="display:grid;gap:10px;"></div>
-      </div>
+      <div style="padding:16px;"><h3 style="margin:0 0 12px;color:#2c3e50;">📋 משאבים קיימים</h3><div id="resourceManagerList" style="display:grid;gap:10px;"></div></div>
     </div>
   </div>
 </div>
@@ -414,569 +134,280 @@
 <!-- Modal עריכת משאב -->
 <div class="modal" id="modalEditResource">
   <div class="modal-card" style="max-width:560px;">
-    <div class="modal-head" style="background:#e8f5e9;">
-      <span>✏️ עריכת משאב</span>
-      <button class="x" id="modalEditResourceClose">✕</button>
-    </div>
+    <div class="modal-head" style="background:#e8f5e9;"><span>✏️ עריכת משאב</span><button class="x" id="modalEditResourceClose">✕</button></div>
     <div class="modal-body">
       <input type="hidden" id="editResId">
       <div style="display:grid;gap:12px;">
-        <div>
-          <label style="font-weight:bold;display:block;margin-bottom:4px;">שם המשאב</label>
-          <input id="editResName" type="text" style="padding:10px;border:1px solid #ddd;border-radius:8px;font-size:1rem;direction:rtl;width:100%;box-sizing:border-box;">
-        </div>
-        <div>
-          <label style="font-weight:bold;display:block;margin-bottom:4px;">תקנון שימוש</label>
-          <textarea id="editResTerms" rows="8" style="padding:10px;border:1px solid #ddd;border-radius:8px;font-size:0.9rem;direction:rtl;width:100%;box-sizing:border-box;resize:vertical;"></textarea>
-        </div>
-        <div>
-          <label style="font-weight:bold;display:block;margin-bottom:4px;">סדר תצוגה (מספר נמוך = ראשון)</label>
-          <input id="editResOrder" type="number" min="0" style="padding:10px;border:1px solid #ddd;border-radius:8px;font-size:1rem;width:120px;">
-        </div>
+        <div><label style="font-weight:bold;display:block;margin-bottom:4px;">שם המשאב</label><input id="editResName" type="text" style="padding:10px;border:1px solid #ddd;border-radius:8px;font-size:1rem;direction:rtl;width:100%;box-sizing:border-box;"></div>
+        <div><label style="font-weight:bold;display:block;margin-bottom:4px;">תקנון שימוש</label><textarea id="editResTerms" rows="8" style="padding:10px;border:1px solid #ddd;border-radius:8px;font-size:0.9rem;direction:rtl;width:100%;box-sizing:border-box;resize:vertical;"></textarea></div>
+        <div><label style="font-weight:bold;display:block;margin-bottom:4px;">סדר תצוגה (מספר נמוך = ראשון)</label><input id="editResOrder" type="number" min="0" style="padding:10px;border:1px solid #ddd;border-radius:8px;font-size:1rem;width:120px;"></div>
       </div>
     </div>
-    <div class="modal-actions">
-      <button id="btnSaveEditResource" class="btn primary">💾 שמור שינויים</button>
-      <button id="btnCancelEditResource" class="btn">ביטול</button>
-    </div>
+    <div class="modal-actions"><button id="btnSaveEditResource" class="btn primary">💾 שמור שינויים</button><button id="btnCancelEditResource" class="btn">ביטול</button></div>
   </div>
 </div>
 
 <script>
   const { DateTime } = luxon;
-
-  // ====== הגדרות ======
-  // אם באמת אין צורך בהתאמות TZ – עדיין נשמור על עקביות לוגית עם ישראל:
   const TIMEZONE = 'Asia/Jerusalem';
-
   const SB_URL = 'https://jqddombezqqvdcxqlife.supabase.co';
   const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxZGRvbWJlenFxdmRjeHFsaWZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3MTI2OTksImV4cCI6MjA4NjI4ODY5OX0._T8dlA1qWNQBLwvQCRyIrht-44wHTIlfwrshP0YjIcI';
   const supa = supabase.createClient(SB_URL, SB_KEY);
 
-  // ====== state ======
-  let resources = [];
-  let bookings = [];
-  let viewMode = 'week'; // 'week' | 'last30'
+  // ===== לוג =====
+  const adminLogs = [];
+  function addLog(msg, level='INFO') {
+    const ts = new Date().toLocaleTimeString('he-IL',{hour12:false});
+    const line = `[${ts}] [${level}] ${msg}`;
+    adminLogs.push(line);
+    const el = document.getElementById('debug-log');
+    el.textContent += line + '\n';
+    el.scrollTop = el.scrollHeight;
+  }
+  document.getElementById('btnCopyLog').addEventListener('click', () => {
+    const text = adminLogs.join('\n');
+    if (navigator.clipboard) navigator.clipboard.writeText(text).then(()=>alert('✅ הלוג הועתק — הדבק בוואטסאפ'));
+    else { const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); alert('✅ הלוג הועתק'); }
+  });
+  document.getElementById('btnClearLog').addEventListener('click', () => {
+    adminLogs.length=0; document.getElementById('debug-log').textContent=''; addLog('לוג נוקה');
+  });
+
+  // ===== State =====
+  let resources=[], bookings=[], viewMode='week';
   let anchorDate = DateTime.now().setZone(TIMEZONE).startOf('day');
+  const HIDE_KEY='yakum_admin_hidden_resources_v1';
+  function loadHiddenSet(){ try{ const r=localStorage.getItem(HIDE_KEY); return new Set((r?JSON.parse(r):[]).map(String)); } catch{ return new Set(); } }
+  function saveHiddenSet(s){ localStorage.setItem(HIDE_KEY,JSON.stringify(Array.from(s))); }
+  let hiddenResources=loadHiddenSet();
 
-  // hide list persisted
-  const HIDE_KEY = 'yakum_admin_hidden_resources_v1';
-  function loadHiddenSet(){
-    try{
-      const raw = localStorage.getItem(HIDE_KEY);
-      const arr = raw ? JSON.parse(raw) : [];
-      return new Set(arr.map(String));
-    } catch { return new Set(); }
-  }
-  function saveHiddenSet(set){
-    localStorage.setItem(HIDE_KEY, JSON.stringify(Array.from(set)));
-  }
-  let hiddenResources = loadHiddenSet();
-
-  // ====== elements ======
-  const elList = document.getElementById('resourceList');
-  const elTotal = document.getElementById('totalCount');
-  const elTopRes = document.getElementById('topResourceDisplay');
-  const elRange = document.getElementById('rangeDisplay');
-  const elSearch = document.getElementById('searchBox');
-  const elHidePast = document.getElementById('hidePast');
-
-  // modal
-  const elModal = document.getElementById('modal');
-  const elModalClose = document.getElementById('modalClose');
-  const elModalBody = document.getElementById('modalBody');
-  const elModalActions = document.getElementById('modalActions');
-  const elModalTitle = document.getElementById('modalTitle');
+  const elList=document.getElementById('resourceList'), elTotal=document.getElementById('totalCount'), elTopRes=document.getElementById('topResourceDisplay'), elRange=document.getElementById('rangeDisplay'), elSearch=document.getElementById('searchBox'), elHidePast=document.getElementById('hidePast'), elModal=document.getElementById('modal'), elModalBody=document.getElementById('modalBody'), elModalActions=document.getElementById('modalActions'), elModalTitle=document.getElementById('modalTitle');
 
   function fmtDay(dt){ return dt.toFormat('yyyy-LL-dd'); }
   function fmtTime(dt){ return dt.toFormat('HH:mm'); }
-  function escapeHtml(str){
-    return String(str).replace(/[&<>"']/g, s => ({
-      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-    }[s]));
-  }
+  function escapeHtml(str){ return String(str).replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s])); }
 
-  function sundayStartOfWeek(dt){
-    // Luxon weekday: 1=Mon ... 7=Sun
-    const w = dt.weekday;
-    const diff = (w === 7) ? 0 : w; // Mon->1 => minus 1 => Sun
-    return dt.minus({ days: diff }).startOf('day');
-  }
+  function sundayStartOfWeek(dt){ const w=dt.weekday; return dt.minus({days:(w===7)?0:w}).startOf('day'); }
 
   function buildColumns(){
-    let cols = [];
-    let start, endExclusive;
-
-    if(viewMode === 'week'){
-      start = sundayStartOfWeek(anchorDate);
+    let cols=[], start, endExclusive;
+    if(viewMode==='week'){
+      start=sundayStartOfWeek(anchorDate);
       for(let i=0;i<7;i++) cols.push(start.plus({days:i}));
-      endExclusive = start.plus({days:7});
+      endExclusive=start.plus({days:7});
+      elRange.textContent=`${start.toFormat('dd/LL/yyyy')} – ${start.plus({days:6}).toFormat('dd/LL/yyyy')}`;
     } else {
-      const endInclusive = anchorDate; // היום
-      start = endInclusive.minus({days:29}).startOf('day');
+      start=anchorDate.minus({days:29}).startOf('day');
       for(let i=0;i<30;i++) cols.push(start.plus({days:i}));
-      endExclusive = endInclusive.plus({days:1});
-    }
-
-    // range label
-    if(viewMode === 'week'){
-      elRange.textContent = `${start.toFormat('dd/LL/yyyy')} – ${start.plus({days:6}).toFormat('dd/LL/yyyy')}`;
-    } else {
-      elRange.textContent = `${start.toFormat('dd/LL/yyyy')} – ${endExclusive.minus({days:1}).toFormat('dd/LL/yyyy')}`;
+      endExclusive=anchorDate.plus({days:1});
+      elRange.textContent=`${start.toFormat('dd/LL/yyyy')} – ${anchorDate.toFormat('dd/LL/yyyy')}`;
     }
     return { cols, start, endExclusive };
   }
 
   async function loadResources(){
-    const { data, error } = await supa.from('resources').select('*').order('name');
-    if(error) throw error;
-    resources = data || [];
+    addLog('טוען משאבים...');
+    const { data, error }=await supa.from('resources').select('*').order('display_order',{ascending:true}).order('name',{ascending:true});
+    if(error){ addLog('שגיאה: '+error.message,'ERROR'); throw error; }
+    resources=data||[]; addLog(`✓ נטענו ${resources.length} משאבים`);
   }
 
-  async function loadBookings(rangeStart, rangeEndExclusive){
-    // מביאים רק את הטווח המוצג
-    const sISO = rangeStart.toISO({ suppressMilliseconds:true });
-    const eISO = rangeEndExclusive.toISO({ suppressMilliseconds:true });
-
-    const { data, error } = await supa
-      .from('bookings')
-      .select('*, resources(name)')
-      .gte('start_time', sISO)
-      .lt('start_time', eISO)
-      .order('start_time', { ascending: true });
-
-    if(error) throw error;
-    bookings = data || [];
+  async function loadBookings(start, end){
+    addLog(`טוען הזמנות ${start.toFormat('dd/LL')}–${end.toFormat('dd/LL')}...`);
+    const { data, error }=await supa.from('bookings').select('*, resources(name)').gte('start_time',start.toISO({suppressMilliseconds:true})).lt('start_time',end.toISO({suppressMilliseconds:true})).order('start_time',{ascending:true});
+    if(error){ addLog('שגיאה: '+error.message,'ERROR'); throw error; }
+    bookings=data||[]; addLog(`✓ נטענו ${bookings.length} הזמנות`);
   }
 
   function passesFilters(b){
-    const q = (elSearch.value || '').trim().toLowerCase();
-    if(q){
-      const hay = `${b.full_name||''} ${b.email||''} ${b.phone||''}`.toLowerCase();
-      if(!hay.includes(q)) return false;
-    }
-    if(elHidePast.checked){
-      const today = DateTime.now().setZone(TIMEZONE).startOf('day');
-      const s = DateTime.fromISO(b.start_time, { zone: TIMEZONE });
-      if(s < today) return false;
-    }
+    const q=(elSearch.value||'').trim().toLowerCase();
+    if(q&&!`${b.full_name||''} ${b.email||''} ${b.phone||''}`.toLowerCase().includes(q)) return false;
+    if(elHidePast.checked&&DateTime.fromISO(b.start_time,{zone:TIMEZONE})<DateTime.now().setZone(TIMEZONE).startOf('day')) return false;
     return true;
   }
 
-  function groupBookingsForResource(resourceId){
-    const map = new Map(); // dayKey -> bookings[]
-    const resId = String(resourceId);
-
+  function groupBookings(resourceId){
+    const map=new Map(), resId=String(resourceId);
     for(const b of bookings){
-      if(String(b.resource_id) !== resId) continue;
-      if(!passesFilters(b)) continue;
-
-      const s = DateTime.fromISO(b.start_time, { zone: TIMEZONE });
-      const dayKey = fmtDay(s);
-      if(!map.has(dayKey)) map.set(dayKey, []);
-      map.get(dayKey).push(b);
+      if(String(b.resource_id)!==resId||!passesFilters(b)) continue;
+      const dk=fmtDay(DateTime.fromISO(b.start_time,{zone:TIMEZONE}));
+      if(!map.has(dk)) map.set(dk,[]);
+      map.get(dk).push(b);
     }
-
-    // sort each day
-    for(const [k, arr] of map.entries()){
-      arr.sort((a,b)=> a.start_time > b.start_time ? 1 : -1);
-    }
+    for(const arr of map.values()) arr.sort((a,b)=>a.start_time>b.start_time?1:-1);
     return map;
   }
 
-  function computeStats(allVisibleBookings){
-    elTotal.textContent = String(allVisibleBookings.length);
-
-    const counts = new Map(); // resourceName -> count
-    for(const b of allVisibleBookings){
-      const rName = b.resources?.name || 'משאב';
-      counts.set(rName, (counts.get(rName)||0)+1);
-    }
-    const top = Array.from(counts.entries()).sort((a,b)=>b[1]-a[1])[0];
-    elTopRes.textContent = top ? top[0] : '-';
+  function computeStats(vb){
+    elTotal.textContent=String(vb.length);
+    const counts=new Map();
+    for(const b of vb){ const n=b.resources?.name||'משאב'; counts.set(n,(counts.get(n)||0)+1); }
+    const top=Array.from(counts.entries()).sort((a,b)=>b[1]-a[1])[0];
+    elTopRes.textContent=top?top[0]:'-';
   }
 
-  function renderResourceCard(r, cols){
-    const resId = String(r.id);
+  function renderResourceCard(r,cols){
+    const resId=String(r.id);
     if(hiddenResources.has(resId)) return null;
+    const grouped=groupBookings(resId);
+    let cnt=0; for(const d of cols) cnt+=(grouped.get(fmtDay(d))?.length||0);
 
-    const grouped = groupBookingsForResource(resId);
-
-    // count for this resource (visible)
-    let resCount = 0;
+    const card=document.createElement('div'); card.className='res-card';
+    const head=document.createElement('div'); head.className='res-head';
+    const title=document.createElement('div'); title.className='res-title';
+    title.innerHTML=`<span>${escapeHtml(r.name)}</span><span class="pill">${cnt} אירועים</span>`;
+    const acts=document.createElement('div'); acts.className='res-actions';
+    const tog=document.createElement('button'); tog.className='toggle'; tog.textContent='▲';
+    const hid=document.createElement('button'); hid.className='btn danger small'; hid.textContent='הסתר משאב';
+    const body=document.createElement('div'); body.className='res-body';
+    const wrap=document.createElement('div'); wrap.className='cal-wrap';
+    const tbl=document.createElement('table'), thead=document.createElement('thead'), trh=document.createElement('tr');
+    for(const d of cols){ const th=document.createElement('th'); th.innerHTML=`${d.setLocale('he').toFormat('cccc')}<span class="day-sub">${d.toFormat('dd/LL')}</span>`; trh.appendChild(th); }
+    thead.appendChild(trh); tbl.appendChild(thead);
+    const tbody=document.createElement('tbody'), tr=document.createElement('tr');
+    const today=DateTime.now().setZone(TIMEZONE).startOf('day');
     for(const day of cols){
-      const dk = fmtDay(day);
-      resCount += (grouped.get(dk)?.length || 0);
-    }
-
-    const card = document.createElement('div');
-    card.className = 'res-card';
-
-    const head = document.createElement('div');
-    head.className = 'res-head';
-
-    const title = document.createElement('div');
-    title.className = 'res-title';
-    title.innerHTML = `
-      <span>${escapeHtml(r.name)}</span>
-      <span class="pill">${resCount} אירועים</span>
-    `;
-
-    const actions = document.createElement('div');
-    actions.className = 'res-actions';
-
-    const btnToggle = document.createElement('button');
-    btnToggle.className = 'toggle';
-    btnToggle.title = 'כווץ/הרחב';
-    btnToggle.textContent = '▲';
-
-    const btnHide = document.createElement('button');
-    btnHide.className = 'btn danger small';
-    btnHide.textContent = 'הסתר משאב';
-    btnHide.title = 'לא יוצג עד שתחזיר אותו (נשמר בדפדפן)';
-
-    const body = document.createElement('div');
-    body.className = 'res-body';
-
-    // table calendar
-    const wrap = document.createElement('div');
-    wrap.className = 'cal-wrap';
-
-    const table = document.createElement('table');
-    const thead = document.createElement('thead');
-    const trh = document.createElement('tr');
-
-    for(const d of cols){
-      const th = document.createElement('th');
-      th.innerHTML = `${d.setLocale('he').toFormat('cccc')}<span class="day-sub">${d.toFormat('dd/LL')}</span>`;
-      trh.appendChild(th);
-    }
-    thead.appendChild(trh);
-    table.appendChild(thead);
-
-    const tbody = document.createElement('tbody');
-    const tr = document.createElement('tr');
-
-    const today = DateTime.now().setZone(TIMEZONE).startOf('day');
-
-    for(let i=0;i<cols.length;i++){
-      const day = cols[i];
-      const td = document.createElement('td');
-
-      const dk = fmtDay(day);
-      const items = grouped.get(dk) || [];
-
-      if(items.length === 0){
-        const em = document.createElement('div');
-        em.className = 'empty';
-        em.textContent = '—';
-        td.appendChild(em);
-      } else {
-        for(let j=0;j<items.length;j++){
-          const b = items[j];
-          const s = DateTime.fromISO(b.start_time, { zone: TIMEZONE });
-          const e = DateTime.fromISO(b.end_time, { zone: TIMEZONE });
-
-          const slot = document.createElement('div');
-          slot.className = 'slot ' + (j%2===0 ? 'badge1' : 'badge2');
-          if(s < today) slot.classList.add('past');
-
-          slot.innerHTML = `
-            <div><span class="t">${fmtTime(s)}–${fmtTime(e)}</span> • <span class="n">${escapeHtml(b.full_name||'')}</span></div>
-            <div class="m">${escapeHtml([b.phone, b.email].filter(Boolean).join(' | '))}</div>
-          `;
-          slot.addEventListener('click', ()=>openBookingModal(b, r.name));
-          td.appendChild(slot);
-        }
-      }
-
+      const td=document.createElement('td'), items=grouped.get(fmtDay(day))||[];
+      if(!items.length){ const em=document.createElement('div'); em.className='empty'; em.textContent='—'; td.appendChild(em); }
+      else items.forEach((b,j)=>{
+        const s=DateTime.fromISO(b.start_time,{zone:TIMEZONE}), e=DateTime.fromISO(b.end_time,{zone:TIMEZONE});
+        const sl=document.createElement('div'); sl.className='slot '+(j%2===0?'badge1':'badge2');
+        if(s<today) sl.classList.add('past');
+        sl.innerHTML=`<div><span class="t">${fmtTime(s)}–${fmtTime(e)}</span> • <span class="n">${escapeHtml(b.full_name||'')}</span></div><div class="m">${escapeHtml([b.phone,b.email].filter(Boolean).join(' | '))}</div>`;
+        sl.addEventListener('click',()=>openBookingModal(b,r.name)); td.appendChild(sl);
+      });
       tr.appendChild(td);
     }
-
-    tbody.appendChild(tr);
-    table.appendChild(tbody);
-
-    wrap.appendChild(table);
-    body.appendChild(wrap);
-
-    // toggle body
-    btnToggle.addEventListener('click', ()=>{
-      const isHidden = body.classList.toggle('hidden');
-      btnToggle.textContent = isHidden ? '▼' : '▲';
-    });
-
-    // hide resource
-    btnHide.addEventListener('click', ()=>{
-      if(!confirm(`להסתיר את "${r.name}"?`)) return;
-      hiddenResources.add(resId);
-      saveHiddenSet(hiddenResources);
-      render(); // re-render list
-    });
-
-    actions.appendChild(btnToggle);
-    actions.appendChild(btnHide);
-
-    head.appendChild(title);
-    head.appendChild(actions);
-
-    card.appendChild(head);
-    card.appendChild(body);
-
+    tbody.appendChild(tr); tbl.appendChild(tbody); wrap.appendChild(tbl); body.appendChild(wrap);
+    tog.addEventListener('click',()=>{ const h=body.classList.toggle('hidden'); tog.textContent=h?'▼':'▲'; });
+    hid.addEventListener('click',()=>{ if(!confirm(`להסתיר את "${r.name}"?`)) return; hiddenResources.add(resId); saveHiddenSet(hiddenResources); render(); });
+    acts.appendChild(tog); acts.appendChild(hid); head.appendChild(title); head.appendChild(acts); card.appendChild(head); card.appendChild(body);
     return card;
   }
 
   function render(){
-    const { cols } = buildColumns();
-
-    // stats across ALL visible bookings (after filters & hidden resources)
-    const visibleBookings = bookings.filter(b=>{
-      if(!passesFilters(b)) return false;
-      if(hiddenResources.has(String(b.resource_id))) return false;
-      return true;
-    });
-    computeStats(visibleBookings);
-
-    elList.innerHTML = '';
-
-    // build cards
-    for(const r of resources){
-      const card = renderResourceCard(r, cols);
-      if(card) elList.appendChild(card);
-    }
-
-    if(elList.children.length === 0){
-      const empty = document.createElement('div');
-      empty.style.color = '#7f8c8d';
-      empty.style.textAlign = 'center';
-      empty.style.padding = '26px 10px';
-      empty.innerHTML = 'אין משאבים להצגה (ייתכן שהוסתרו כולם או שאין נתונים בטווח).';
-      elList.appendChild(empty);
-    }
+    const { cols }=buildColumns();
+    const vb=bookings.filter(b=>passesFilters(b)&&!hiddenResources.has(String(b.resource_id)));
+    computeStats(vb); elList.innerHTML='';
+    for(const r of resources){ const c=renderResourceCard(r,cols); if(c) elList.appendChild(c); }
+    if(!elList.children.length){ const e=document.createElement('div'); e.style.cssText='color:#7f8c8d;text-align:center;padding:26px 10px;'; e.textContent='אין משאבים להצגה.'; elList.appendChild(e); }
   }
 
-  async function refresh(){
-    const { start, endExclusive } = buildColumns();
-    await loadBookings(start, endExclusive);
-    render();
-  }
+  async function refresh(){ const { start, endExclusive }=buildColumns(); await loadBookings(start,endExclusive); render(); }
 
-  // ===== Modal =====
-  function openBookingModal(b, resourceName){
-    const s = DateTime.fromISO(b.start_time, { zone: TIMEZONE });
-    const e = DateTime.fromISO(b.end_time, { zone: TIMEZONE });
-
-    elModalTitle.textContent = `הזמנה • ${resourceName}`;
-    elModalBody.innerHTML = `
-      <div class="kv">
-        <b>מזמין</b><div>${escapeHtml(b.full_name || '-')}</div>
-        <b>תאריך</b><div>${s.setLocale('he').toFormat('cccc, dd/LL/yyyy')}</div>
-        <b>שעות</b><div>${fmtTime(s)} – ${fmtTime(e)}</div>
-        <b>טלפון</b><div>${escapeHtml(b.phone || '-')}</div>
-        <b>אימייל</b><div>${escapeHtml(b.email || '-')}</div>
-        <b>סטטוס</b><div>${escapeHtml(b.status || '-')}</div>
-        <b>מאומת</b><div>${b.is_verified ? 'כן' : 'לא'}</div>
-        <b>IP</b><div>${escapeHtml(b.ip_address || '-')}</div>
-        <b>נוצר</b><div>${b.created_at ? DateTime.fromISO(b.created_at, { zone: TIMEZONE }).toFormat('dd/LL/yyyy HH:mm') : '-'}</div>
-        <b>ID</b><div style="font-family:monospace">${escapeHtml(b.id || '')}</div>
-      </div>
-      <div class="note">* אין קישור PDF בבסיס הנתונים לפי הסכימה ששלחת. יש חתימה אם קיימת.</div>
-    `;
-
-    elModalActions.innerHTML = '';
-
-    if(b.signature_data){
-      const a = document.createElement('a');
-      a.className = 'btn';
-      a.href = b.signature_data;
-      a.target = '_blank';
-      a.rel = 'noopener';
-      a.textContent = 'חתימה 🖊️';
-      elModalActions.appendChild(a);
-    }
-
-    const del = document.createElement('button');
-    del.className = 'btn danger';
-    del.textContent = 'מחק הזמנה 🗑️';
-    del.addEventListener('click', async ()=>{
+  // ===== Modal הזמנה =====
+  function openBookingModal(b, rName){
+    const s=DateTime.fromISO(b.start_time,{zone:TIMEZONE}), e=DateTime.fromISO(b.end_time,{zone:TIMEZONE});
+    elModalTitle.textContent=`הזמנה • ${rName}`;
+    elModalBody.innerHTML=`<div class="kv"><b>מזמין</b><div>${escapeHtml(b.full_name||'-')}</div><b>תאריך</b><div>${s.setLocale('he').toFormat('cccc, dd/LL/yyyy')}</div><b>שעות</b><div>${fmtTime(s)} – ${fmtTime(e)}</div><b>טלפון</b><div>${escapeHtml(b.phone||'-')}</div><b>אימייל</b><div>${escapeHtml(b.email||'-')}</div><b>נוצר</b><div>${b.created_at?DateTime.fromISO(b.created_at,{zone:TIMEZONE}).toFormat('dd/LL/yyyy HH:mm'):'-'}</div><b>ID</b><div style="font-family:monospace;font-size:0.8rem">${escapeHtml(b.id||'')}</div></div>`;
+    elModalActions.innerHTML='';
+    const del=document.createElement('button'); del.className='btn danger'; del.textContent='מחק הזמנה 🗑️';
+    del.addEventListener('click',async()=>{
       if(!confirm('למחוק את ההזמנה?')) return;
-      await supa.from('bookings').delete().eq('id', b.id);
-      closeModal();
-      await refresh();
+      addLog(`מוחק הזמנה ${b.id.substr(0,8)}...`);
+      const { error }=await supa.from('bookings').delete().eq('id',b.id);
+      if(error){ addLog('שגיאה: '+error.message,'ERROR'); alert('שגיאה: '+error.message); return; }
+      addLog('✓ הזמנה נמחקה'); closeModal(); await refresh();
     });
     elModalActions.appendChild(del);
-
-    const close = document.createElement('button');
-    close.className = 'btn';
-    close.textContent = 'סגור';
-    close.addEventListener('click', closeModal);
-    elModalActions.appendChild(close);
-
-    elModal.style.display = 'block';
+    const cl=document.createElement('button'); cl.className='btn'; cl.textContent='סגור'; cl.addEventListener('click',closeModal); elModalActions.appendChild(cl);
+    elModal.style.display='block';
   }
-
-  function closeModal(){ elModal.style.display = 'none'; }
+  function closeModal(){ elModal.style.display='none'; }
 
   // ===== Events =====
-  document.getElementById('btnRefresh').addEventListener('click', refresh);
-
-  document.getElementById('btnShowAll').addEventListener('click', ()=>{
-    hiddenResources = new Set();
-    saveHiddenSet(hiddenResources);
-    render();
-  });
-
-  document.getElementById('btnWeek').addEventListener('click', async ()=>{
-    viewMode = 'week';
-    document.getElementById('btnWeek').classList.add('active');
-    document.getElementById('btnLast30').classList.remove('active');
-    await refresh();
-  });
-
-  document.getElementById('btnLast30').addEventListener('click', async ()=>{
-    viewMode = 'last30';
-    document.getElementById('btnLast30').classList.add('active');
-    document.getElementById('btnWeek').classList.remove('active');
-    // ב-30 ימים “היום” הוא עוגן, נשאר כך
-    await refresh();
-  });
-
-  document.getElementById('btnToday').addEventListener('click', async ()=>{
-    anchorDate = DateTime.now().setZone(TIMEZONE).startOf('day');
-    await refresh();
-  });
-
-  document.getElementById('btnPrev').addEventListener('click', async ()=>{
-    anchorDate = (viewMode === 'week')
-      ? anchorDate.minus({ days: 7 })
-      : anchorDate.minus({ days: 30 });
-    await refresh();
-  });
-
-  document.getElementById('btnNext').addEventListener('click', async ()=>{
-    anchorDate = (viewMode === 'week')
-      ? anchorDate.plus({ days: 7 })
-      : anchorDate.plus({ days: 30 });
-    await refresh();
-  });
-
-  elHidePast.addEventListener('change', render);
-
-  let searchTimer = null;
-  elSearch.addEventListener('input', ()=>{
-    clearTimeout(searchTimer);
-    searchTimer = setTimeout(render, 200);
-  });
-
-  document.getElementById('modalClose').addEventListener('click', closeModal);
-  elModal.addEventListener('click', (e)=>{ if(e.target === elModal) closeModal(); });
+  document.getElementById('btnRefresh').addEventListener('click',()=>{ addLog('רענון ידני'); refresh(); });
+  document.getElementById('btnShowAll').addEventListener('click',()=>{ hiddenResources=new Set(); saveHiddenSet(hiddenResources); render(); });
+  document.getElementById('btnWeek').addEventListener('click',async()=>{ viewMode='week'; document.getElementById('btnWeek').classList.add('active'); document.getElementById('btnLast30').classList.remove('active'); await refresh(); });
+  document.getElementById('btnLast30').addEventListener('click',async()=>{ viewMode='last30'; document.getElementById('btnLast30').classList.add('active'); document.getElementById('btnWeek').classList.remove('active'); await refresh(); });
+  document.getElementById('btnToday').addEventListener('click',async()=>{ anchorDate=DateTime.now().setZone(TIMEZONE).startOf('day'); await refresh(); });
+  document.getElementById('btnPrev').addEventListener('click',async()=>{ anchorDate=(viewMode==='week')?anchorDate.minus({days:7}):anchorDate.minus({days:30}); await refresh(); });
+  document.getElementById('btnNext').addEventListener('click',async()=>{ anchorDate=(viewMode==='week')?anchorDate.plus({days:7}):anchorDate.plus({days:30}); await refresh(); });
+  elHidePast.addEventListener('change',render);
+  let st=null; elSearch.addEventListener('input',()=>{ clearTimeout(st); st=setTimeout(render,200); });
+  document.getElementById('modalClose').addEventListener('click',closeModal);
+  elModal.addEventListener('click',e=>{ if(e.target===elModal) closeModal(); });
 
   // ===== ניהול משאבים =====
-  async function openResourceManager() {
-    document.getElementById('modalResources').style.display = 'block';
-    await renderResourceManager();
-  }
-  function closeResourceManager() {
-    document.getElementById('modalResources').style.display = 'none';
-  }
-  async function renderResourceManager() {
-    const { data, error } = await supa.from('resources').select('*').order('display_order',{ascending:true}).order('name',{ascending:true});
-    const list = document.getElementById('resourceManagerList');
-    if (error || !data) { list.innerHTML = '<p>שגיאה בטעינה</p>'; return; }
-    list.innerHTML = '';
-    for (const r of data) {
-      const card = document.createElement('div');
-      card.style.cssText = `border:1px solid #ddd;border-radius:10px;padding:12px;background:${r.is_active ? '#fff' : '#fef9e7'};`;
-      card.innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
-          <div>
-            <span style="font-weight:bold;font-size:1rem;">${escapeHtml(r.name)}</span>
-            <span style="margin-right:8px;font-size:0.82rem;color:${r.is_active ? '#27ae60' : '#e67e22'};">${r.is_active ? '✅ פעיל' : '⏸ מוסתר'}</span>
-            <span style="font-size:0.75rem;color:#999;">סדר: ${r.display_order ?? 0}</span>
-          </div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap;">
-            <button class="btn" onclick="editResource('${r.id}')" style="font-size:0.82rem;padding:6px 10px;">✏️ ערוך</button>
-            <button class="btn" onclick="toggleResource('${r.id}',${r.is_active})" style="font-size:0.82rem;padding:6px 10px;background:${r.is_active ? '#f39c12' : '#27ae60'};color:#fff;border-color:${r.is_active ? '#f39c12' : '#27ae60'};">${r.is_active ? '⏸ הסתר' : '▶ הפעל'}</button>
-            <button class="btn danger" onclick="deleteResource('${r.id}','${escapeHtml(r.name).replace(/'/g,"\\'")}')">🗑 מחק</button>
-          </div>
-        </div>`;
+  async function openResourceManager(){ document.getElementById('modalResources').style.display='block'; await renderResourceManager(); }
+  function closeResourceManager(){ document.getElementById('modalResources').style.display='none'; }
+
+  async function renderResourceManager(){
+    const { data, error }=await supa.from('resources').select('*').order('display_order',{ascending:true}).order('name',{ascending:true});
+    const list=document.getElementById('resourceManagerList');
+    if(error||!data){ list.innerHTML='<p>שגיאה בטעינה</p>'; return; }
+    list.innerHTML='';
+    for(const r of data){
+      const card=document.createElement('div');
+      card.style.cssText=`border:1px solid #ddd;border-radius:10px;padding:12px;background:${r.is_active?'#fff':'#fef9e7'};`;
+      card.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;"><div><span style="font-weight:bold;font-size:1rem;">${escapeHtml(r.name)}</span><span style="margin-right:8px;font-size:0.82rem;color:${r.is_active?'#27ae60':'#e67e22'};">${r.is_active?'✅ פעיל':'⏸ מוסתר'}</span><span style="font-size:0.75rem;color:#999;">סדר: ${r.display_order??0}</span></div><div style="display:flex;gap:6px;flex-wrap:wrap;"><button class="btn" onclick="editResource('${r.id}')" style="font-size:0.82rem;padding:6px 10px;">✏️ ערוך</button><button class="btn" onclick="toggleResource('${r.id}',${r.is_active})" style="font-size:0.82rem;padding:6px 10px;background:${r.is_active?'#f39c12':'#27ae60'};color:#fff;border-color:${r.is_active?'#f39c12':'#27ae60'};">${r.is_active?'⏸ הסתר':'▶ הפעל'}</button><button class="btn danger" onclick="deleteResource('${r.id}','${escapeHtml(r.name).replace(/'/g,"\\'")}')">🗑 מחק</button></div></div>`;
       list.appendChild(card);
     }
   }
-  async function addResource() {
-    const name = document.getElementById('newResName').value.trim();
-    const terms = document.getElementById('newResTerms').value.trim();
-    if (!name || !terms) { alert('יש למלא שם ותקנון'); return; }
-    const btn = document.getElementById('btnAddResource');
-    btn.disabled = true; btn.textContent = '⏳ מוסיף...';
-    const { error } = await supa.from('resources').insert([{ name, terms_text: terms, is_active: true, display_order: 99 }]);
-    if (error) alert('שגיאה: ' + error.message);
-    else { document.getElementById('newResName').value = ''; document.getElementById('newResTerms').value = ''; await renderResourceManager(); await loadResources(); }
-    btn.disabled = false; btn.textContent = '➕ הוסף משאב';
+
+  async function addResource(){
+    const name=document.getElementById('newResName').value.trim(), terms=document.getElementById('newResTerms').value.trim();
+    if(!name||!terms){ alert('יש למלא שם ותקנון'); return; }
+    const btn=document.getElementById('btnAddResource'); btn.disabled=true; btn.textContent='⏳ מוסיף...';
+    addLog(`מוסיף משאב: "${name}"`);
+    const { error }=await supa.from('resources').insert([{name, terms_text:terms, is_active:true, display_order:99}]);
+    if(error){ addLog('שגיאה: '+error.message,'ERROR'); alert('שגיאה: '+error.message); }
+    else { addLog(`✓ משאב "${name}" נוסף`); document.getElementById('newResName').value=''; document.getElementById('newResTerms').value=''; await renderResourceManager(); await loadResources(); }
+    btn.disabled=false; btn.textContent='➕ הוסף משאב';
   }
-  async function toggleResource(id, isActive) {
-    const { error } = await supa.from('resources').update({ is_active: !isActive }).eq('id', id);
-    if (error) alert('שגיאה: ' + error.message);
+
+  async function toggleResource(id, isActive){
+    const { error }=await supa.from('resources').update({is_active:!isActive}).eq('id',id);
+    if(error){ alert('שגיאה: '+error.message); }
     else { await renderResourceManager(); await loadResources(); render(); }
   }
-  async function deleteResource(id, name) {
-    const now = new Date().toISOString();
-    const { data: future } = await supa.from('bookings').select('id').eq('resource_id', id).gte('start_time', now).limit(1);
-    const msg = (future && future.length > 0)
-      ? `למשאב "${name}" יש הזמנות עתידיות!\nמחיקה תמחק גם אותן. להמשיך?`
-      : `למחוק את המשאב "${name}"?\nלא ניתן לשחזר.`;
-    if (!confirm(msg)) return;
-    const { error } = await supa.from('resources').delete().eq('id', id);
-    if (error) alert('שגיאה: ' + error.message);
-    else { await renderResourceManager(); await loadResources(); render(); }
+
+  async function deleteResource(id, name){
+    const { data:future }=await supa.from('bookings').select('id').eq('resource_id',id).gte('start_time',new Date().toISOString()).limit(1);
+    const msg=(future&&future.length>0)?`למשאב "${name}" יש הזמנות עתידיות!\nמחיקה תמחק גם אותן. להמשיך?`:`למחוק את המשאב "${name}"?\nלא ניתן לשחזר.`;
+    if(!confirm(msg)) return;
+    addLog(`מוחק משאב "${name}" וכל הזמנותיו...`);
+    // מחק תחילה את כל ההזמנות הקשורות
+    const { error:e1 }=await supa.from('bookings').delete().eq('resource_id',id);
+    if(e1){ addLog('שגיאה במחיקת הזמנות: '+e1.message,'ERROR'); alert('שגיאה: '+e1.message); return; }
+    const { error:e2 }=await supa.from('resources').delete().eq('id',id);
+    if(e2){ addLog('שגיאה במחיקת משאב: '+e2.message,'ERROR'); alert('שגיאה: '+e2.message); }
+    else { addLog(`✓ משאב "${name}" נמחק בהצלחה`); await renderResourceManager(); await loadResources(); render(); }
   }
-  async function editResource(id) {
-    const res = resources.find(r => String(r.id) === String(id));
-    if (!res) return;
-    document.getElementById('editResId').value = res.id;
-    document.getElementById('editResName').value = res.name;
-    document.getElementById('editResTerms').value = res.terms_text || '';
-    document.getElementById('editResOrder').value = res.display_order ?? 0;
-    document.getElementById('modalEditResource').style.display = 'block';
+
+  async function editResource(id){
+    const res=resources.find(r=>String(r.id)===String(id)); if(!res) return;
+    document.getElementById('editResId').value=res.id; document.getElementById('editResName').value=res.name;
+    document.getElementById('editResTerms').value=res.terms_text||''; document.getElementById('editResOrder').value=res.display_order??0;
+    document.getElementById('modalEditResource').style.display='block';
   }
-  async function saveEditResource() {
-    const id = document.getElementById('editResId').value;
-    const name = document.getElementById('editResName').value.trim();
-    const terms = document.getElementById('editResTerms').value.trim();
-    const order = parseInt(document.getElementById('editResOrder').value) || 0;
-    if (!name || !terms) { alert('יש למלא שם ותקנון'); return; }
-    const btn = document.getElementById('btnSaveEditResource');
-    btn.disabled = true; btn.textContent = '⏳ שומר...';
-    const { error } = await supa.from('resources').update({ name, terms_text: terms, display_order: order }).eq('id', id);
-    if (error) alert('שגיאה: ' + error.message);
-    else { document.getElementById('modalEditResource').style.display = 'none'; await loadResources(); await renderResourceManager(); render(); }
-    btn.disabled = false; btn.textContent = '💾 שמור שינויים';
+
+  async function saveEditResource(){
+    const id=document.getElementById('editResId').value, name=document.getElementById('editResName').value.trim(), terms=document.getElementById('editResTerms').value.trim(), order=parseInt(document.getElementById('editResOrder').value)||0;
+    if(!name||!terms){ alert('יש למלא שם ותקנון'); return; }
+    const btn=document.getElementById('btnSaveEditResource'); btn.disabled=true; btn.textContent='⏳ שומר...';
+    addLog(`שומר עריכה: "${name}"`);
+    const { error }=await supa.from('resources').update({name, terms_text:terms, display_order:order}).eq('id',id);
+    if(error){ addLog('שגיאה: '+error.message,'ERROR'); alert('שגיאה: '+error.message); }
+    else { addLog(`✓ משאב "${name}" עודכן`); document.getElementById('modalEditResource').style.display='none'; await loadResources(); await renderResourceManager(); render(); }
+    btn.disabled=false; btn.textContent='💾 שמור שינויים';
   }
-  document.getElementById('btnManageResources').addEventListener('click', openResourceManager);
-  document.getElementById('modalResourcesClose').addEventListener('click', closeResourceManager);
-  document.getElementById('modalResources').addEventListener('click', e => { if(e.target===document.getElementById('modalResources')) closeResourceManager(); });
-  document.getElementById('btnAddResource').addEventListener('click', addResource);
-  document.getElementById('btnSaveEditResource').addEventListener('click', saveEditResource);
-  document.getElementById('btnCancelEditResource').addEventListener('click', ()=>document.getElementById('modalEditResource').style.display='none');
-  document.getElementById('modalEditResourceClose').addEventListener('click', ()=>document.getElementById('modalEditResource').style.display='none');
-  window.editResource = editResource;
-  window.toggleResource = toggleResource;
-  window.deleteResource = deleteResource;
+
+  document.getElementById('btnManageResources').addEventListener('click',openResourceManager);
+  document.getElementById('modalResourcesClose').addEventListener('click',closeResourceManager);
+  document.getElementById('modalResources').addEventListener('click',e=>{ if(e.target===document.getElementById('modalResources')) closeResourceManager(); });
+  document.getElementById('btnAddResource').addEventListener('click',addResource);
+  document.getElementById('btnSaveEditResource').addEventListener('click',saveEditResource);
+  document.getElementById('btnCancelEditResource').addEventListener('click',()=>document.getElementById('modalEditResource').style.display='none');
+  document.getElementById('modalEditResourceClose').addEventListener('click',()=>document.getElementById('modalEditResource').style.display='none');
+  window.editResource=editResource; window.toggleResource=toggleResource; window.deleteResource=deleteResource;
 
   // ===== Init =====
   (async function init(){
-    try{
-      await loadResources();
-      await refresh();
-    } catch(err){
-      alert('שגיאה באתחול אדמין: ' + (err?.message || err));
-      console.error(err);
-    }
+    addLog('=== יקום Connect אדמין מאותחל ===');
+    try{ await loadResources(); await refresh(); addLog('✓ אתחול הושלם בהצלחה'); }
+    catch(err){ addLog('שגיאה: '+(err?.message||err),'ERROR'); alert('שגיאה באתחול: '+(err?.message||err)); }
   })();
-</script>
-
-<!-- missing buttons referenced above -->
-<script>
-  // buttons exist in HTML controls? we referenced btnToday/btnPrev/btnNext but didn't create them.
 </script>
 </body>
 </html>
