@@ -76,10 +76,10 @@
     <div class="controls-row">
       <div class="seg">
         <button class="btn active" id="btnWeek">שבוע (א׳–ש׳)</button>
-        <button class="btn" id="btnLast30">30 ימים אחרונים</button>
+        <button class="btn" id="btnMonth">חודש נוכחי</button>
       </div>
       <div class="field">
-        <button class="btn" id="btnPrev">קודם ▶</button>
+        <button class="btn" id="btnPrev">הקודם ▶</button>
         <button class="btn" id="btnToday">היום</button>
         <button class="btn" id="btnNext">◀ הבא</button>
         <input id="searchBox" type="text" placeholder="חיפוש: שם/אימייל/טלפון" />
@@ -197,10 +197,12 @@
       endExclusive=start.plus({days:7});
       elRange.textContent=`${start.toFormat('dd/LL/yyyy')} – ${start.plus({days:6}).toFormat('dd/LL/yyyy')}`;
     } else {
-      start=anchorDate.minus({days:29}).startOf('day');
-      for(let i=0;i<30;i++) cols.push(start.plus({days:i}));
-      endExclusive=anchorDate.plus({days:1});
-      elRange.textContent=`${start.toFormat('dd/LL/yyyy')} – ${anchorDate.toFormat('dd/LL/yyyy')}`;
+      // תצוגת חודש — מהיום הראשון עד האחרון של החודש
+      start=anchorDate.startOf('month');
+      endExclusive=anchorDate.endOf('month').plus({days:1}).startOf('day');
+      let d=start;
+      while(d<endExclusive){ cols.push(d); d=d.plus({days:1}); }
+      elRange.textContent=`${start.setLocale('he').toFormat('LLLL yyyy')}`;
     }
     return { cols, start, endExclusive };
   }
@@ -318,11 +320,11 @@
   // ===== Events =====
   document.getElementById('btnRefresh').addEventListener('click',()=>{ addLog('רענון ידני'); refresh(); });
   document.getElementById('btnShowAll').addEventListener('click',()=>{ hiddenResources=new Set(); saveHiddenSet(hiddenResources); render(); });
-  document.getElementById('btnWeek').addEventListener('click',async()=>{ viewMode='week'; document.getElementById('btnWeek').classList.add('active'); document.getElementById('btnLast30').classList.remove('active'); await refresh(); });
-  document.getElementById('btnLast30').addEventListener('click',async()=>{ viewMode='last30'; document.getElementById('btnLast30').classList.add('active'); document.getElementById('btnWeek').classList.remove('active'); await refresh(); });
+  document.getElementById('btnWeek').addEventListener('click',async()=>{ viewMode='week'; document.getElementById('btnWeek').classList.add('active'); document.getElementById('btnMonth').classList.remove('active'); await refresh(); });
+  document.getElementById('btnMonth').addEventListener('click',async()=>{ viewMode='month'; anchorDate=DateTime.now().setZone(TIMEZONE).startOf('day'); document.getElementById('btnMonth').classList.add('active'); document.getElementById('btnWeek').classList.remove('active'); await refresh(); });
   document.getElementById('btnToday').addEventListener('click',async()=>{ anchorDate=DateTime.now().setZone(TIMEZONE).startOf('day'); await refresh(); });
-  document.getElementById('btnPrev').addEventListener('click',async()=>{ anchorDate=(viewMode==='week')?anchorDate.minus({days:7}):anchorDate.minus({days:30}); await refresh(); });
-  document.getElementById('btnNext').addEventListener('click',async()=>{ anchorDate=(viewMode==='week')?anchorDate.plus({days:7}):anchorDate.plus({days:30}); await refresh(); });
+  document.getElementById('btnPrev').addEventListener('click',async()=>{ anchorDate=(viewMode==='week')?anchorDate.minus({days:7}):anchorDate.minus({months:1}); await refresh(); });
+  document.getElementById('btnNext').addEventListener('click',async()=>{ anchorDate=(viewMode==='week')?anchorDate.plus({days:7}):anchorDate.plus({months:1}); await refresh(); });
   elHidePast.addEventListener('change',render);
   let st=null; elSearch.addEventListener('input',()=>{ clearTimeout(st); st=setTimeout(render,200); });
   document.getElementById('modalClose').addEventListener('click',closeModal);
@@ -363,16 +365,19 @@
   }
 
   async function deleteResource(id, name){
-    const { data:future }=await supa.from('bookings').select('id').eq('resource_id',id).gte('start_time',new Date().toISOString()).limit(1);
-    const msg=(future&&future.length>0)?`למשאב "${name}" יש הזמנות עתידיות!\nמחיקה תמחק גם אותן. להמשיך?`:`למחוק את המשאב "${name}"?\nלא ניתן לשחזר.`;
+    const { data:allBookings }=await supa.from('bookings').select('id').eq('resource_id',id);
+    const count = allBookings?.length || 0;
+    const msg = count > 0
+      ? `למשאב "${name}" יש ${count} הזמנות (כולל עבר).\nמחיקה תמחק את כולן. להמשיך?`
+      : `למחוק את המשאב "${name}"?\nלא ניתן לשחזר.`;
     if(!confirm(msg)) return;
-    addLog(`מוחק משאב "${name}" וכל הזמנותיו...`);
-    // מחק תחילה את כל ההזמנות הקשורות
+    addLog(`מוחק משאב "${name}" ו-${count} הזמנותיו...`);
+    // מחק את כל ההזמנות הקשורות (עבר + עתיד)
     const { error:e1 }=await supa.from('bookings').delete().eq('resource_id',id);
     if(e1){ addLog('שגיאה במחיקת הזמנות: '+e1.message,'ERROR'); alert('שגיאה: '+e1.message); return; }
     const { error:e2 }=await supa.from('resources').delete().eq('id',id);
     if(e2){ addLog('שגיאה במחיקת משאב: '+e2.message,'ERROR'); alert('שגיאה: '+e2.message); }
-    else { addLog(`✓ משאב "${name}" נמחק בהצלחה`); await renderResourceManager(); await loadResources(); render(); }
+    else { addLog(`✓ משאב "${name}" ו-${count} הזמנות נמחקו בהצלחה`); await renderResourceManager(); await loadResources(); render(); }
   }
 
   async function editResource(id){
