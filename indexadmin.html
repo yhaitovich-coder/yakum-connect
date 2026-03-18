@@ -57,14 +57,14 @@
 <body>
 <div class="admin-container">
   <header>
-    <img src="https://jqddombezqqvdcxqlife.supabase.co/storage/v1/object/public/contracts/Yakum%20final%20logo-02.jpg" class="admin-logo" alt="לוגו יקום">
-    <h1>ניהול יקום – משאבים אחד מתחת לשני</h1>
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
       <button class="btn primary" id="btnRefresh">רענון 🔄</button>
       <button class="btn" id="btnShowAll">הצג את כל המשאבים 👁️</button>
       <button class="btn" id="btnManageResources" style="background:#8e44ad;color:#fff;border-color:#8e44ad;">⚙️ ניהול משאבים</button>
       <button class="btn" id="btnRecurring" style="background:#e67e22;color:#fff;border-color:#e67e22;">🔁 הזמנות חוזרות</button>
     </div>
+    <h1>ניהול יקום – משאבים אחד מתחת לשני</h1>
+    <img src="https://jqddombezqqvdcxqlife.supabase.co/storage/v1/object/public/contracts/Yakum%20final%20logo-02.jpg" class="admin-logo" alt="לוגו יקום" style="max-width:140px;height:auto;order:-1;">
   </header>
 
   <div class="stats-bar">
@@ -260,10 +260,12 @@
     const title=document.createElement('div'); title.className='res-title';
     title.innerHTML=`<span>${escapeHtml(r.name)}</span><span class="pill">${cnt} אירועים</span>`;
     const acts=document.createElement('div'); acts.className='res-actions';
-    const tog=document.createElement('button'); tog.className='toggle'; tog.textContent='▲';
+    const tog=document.createElement('button'); tog.className='toggle';
     const hid=document.createElement('button'); hid.className='btn danger small'; hid.textContent='הסתר משאב';
     const body=document.createElement('div'); body.className='res-body';
     const today=DateTime.now().setZone(TIMEZONE).startOf('day');
+    const startCollapsed=(viewMode==='month');
+    if(startCollapsed){ body.classList.add('hidden'); tog.textContent='▼'; } else { tog.textContent='▲'; }
 
     if(viewMode==='month'){
       // תצוגת רשימה לחודש
