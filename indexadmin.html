@@ -225,7 +225,7 @@
   function passesFilters(b){
     const q=(elSearch.value||'').trim().toLowerCase();
     if(q&&!`${b.full_name||''} ${b.email||''} ${b.phone||''}`.toLowerCase().includes(q)) return false;
-    if(elHidePast.checked&&DateTime.fromISO(b.start_time,{zone:TIMEZONE})<DateTime.now().setZone(TIMEZONE).startOf('day')) return false;
+    if(elHidePast.checked&&DateTime.fromISO(b.start_time,{zone:TIMEZONE}).startOf('day')<DateTime.now().setZone(TIMEZONE).startOf('day')) return false;
     return true;
   }
 
@@ -501,8 +501,8 @@
           full_name: title,
           email: 'admin@yakum.org.il',
           phone: '---',
-          start_time: `${current.toFormat('yyyy-LL-dd')}T${startTime}:00`,
-          end_time:   `${current.toFormat('yyyy-LL-dd')}T${endTime}:00`,
+          start_time: DateTime.fromISO(`${current.toFormat('yyyy-LL-dd')}T${startTime}:00`,{zone:TIMEZONE}).toISO({suppressMilliseconds:true}),
+          end_time:   DateTime.fromISO(`${current.toFormat('yyyy-LL-dd')}T${endTime}:00`,{zone:TIMEZONE}).toISO({suppressMilliseconds:true}),
           signature_data: null,
           status: 'admin_block'
         });
