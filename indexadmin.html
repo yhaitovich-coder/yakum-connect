@@ -532,10 +532,6 @@
   }
 
   document.getElementById('btnRecurring').addEventListener('click', openRecurring);
-  document.getElementById('modalRecurringClose').addEventListener('click', closeRecurring);
-  document.getElementById('modalRecurring').addEventListener('click',e=>{ if(e.target===document.getElementById('modalRecurring')) closeRecurring(); });
-  document.getElementById('recType').addEventListener('change', updateRecurringUI);
-  document.getElementById('btnCreateRecurring').addEventListener('click', createRecurringBookings);
 
   // ===== Init =====
   (async function init(){
@@ -613,5 +609,20 @@
     </div>
   </div>
 </div>
+
+<script>
+  // Event listeners להזמנות חוזרות — אחרי שה-HTML נטען
+  document.getElementById('modalRecurringClose').addEventListener('click', closeRecurring);
+  document.getElementById('modalRecurring').addEventListener('click',e=>{ if(e.target===document.getElementById('modalRecurring')) closeRecurring(); });
+  document.getElementById('recType').addEventListener('change', updateRecurringUI);
+  document.getElementById('btnCreateRecurring').addEventListener('click', createRecurringBookings);
+
+  // Init
+  (async function init(){
+    addLog('=== יקום Connect אדמין מאותחל ===');
+    try{ await loadResources(); await refresh(); addLog('✓ אתחול הושלם בהצלחה'); }
+    catch(err){ addLog('שגיאה: '+(err?.message||err),'ERROR'); alert('שגיאה באתחול: '+(err?.message||err)); }
+  })();
+</script>
 </body>
 </html>
