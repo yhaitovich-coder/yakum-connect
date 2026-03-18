@@ -10,6 +10,8 @@
     <!-- html2canvas + jsPDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- pdf-lib: מיזוג PDF אמיתי -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 
     <style>
         :root {
@@ -808,44 +810,50 @@
 
             addLog('STEP 3: Generating multi-page PDF...');
 
-            const { jsPDF } = window.jspdf;
             const html2canvasOpts = { scale: 0.9, logging: false, backgroundColor: '#ffffff' };
-            let pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
 
-            // ===== עמוד 1: חוזה =====
+            // ===== יצירת עמוד חתימה =====
+            const { jsPDF } = window.jspdf;
+            const sigJsPdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+            const sigPageElement = document.getElementById('pdf-signature-page');
+            const canvasSig = await html2canvas(sigPageElement, html2canvasOpts);
+            const imgSigData = canvasSig.toDataURL('image/jpeg', 0.8);
+            sigJsPdf.addImage(imgSigData, 'JPEG', 0, 0, 210, 297);
+            const sigPdfBytes = sigJsPdf.output('arraybuffer');
+
+            let finalPdfBytes;
+
             if (res.contract_pdf_url) {
-                // יש PDF מועלה — נציג עמוד תקציר + קישור לחוזה המקורי
-                addLog('Contract PDF URL found — embedding summary page');
-                pdf.setFontSize(20);
-                pdf.text('Yakum Connect', 105, 22, { align: 'center' });
-                pdf.setFontSize(14);
-                pdf.text('\u05d7\u05d5\u05d6\u05d4 \u05d7\u05ea\u05d5\u05dd \u05d5\u05d0\u05d9\u05e9\u05d5\u05e8 \u05d4\u05d6\u05de\u05e0\u05d4', 105, 33, { align: 'center' });
-                pdf.setDrawColor(46, 204, 113);
-                pdf.setLineWidth(0.8);
-                pdf.line(10, 38, 200, 38);
+                // ===== מיזוג PDF: חוזה מקורי + עמוד חתימה =====
+                addLog('Fetching original contract PDF for merge...');
+                try {
+                    const contractResp = await fetch(res.contract_pdf_url);
+                    if (!contractResp.ok) throw new Error('HTTP ' + contractResp.status);
+                    const contractBytes = await contractResp.arrayBuffer();
 
-                pdf.setFontSize(12);
-                pdf.setFont('helvetica', 'normal');
-                const infoLines = [
-                    '\u05de\u05d6\u05de\u05d9\u05df: ' + name,
-                    '\u05de\u05e9\u05d0\u05d1: ' + res.name,
-                    '\u05ea\u05d0\u05e8\u05d9\u05da: ' + date + '  |  ' + sTime + ' - ' + eTime,
-                    '\u05d0\u05d9\u05de\u05d9\u05d9\u05dc: ' + email + '  |  \u05d8\u05dc: ' + phone,
-                ];
-                infoLines.forEach((line, i) => {
-                    pdf.text(line, 190, 52 + i * 10, { align: 'right' });
-                });
+                    const { PDFDocument } = PDFLib;
+                    const contractDoc = await PDFDocument.load(contractBytes);
+                    const sigDoc = await PDFDocument.load(sigPdfBytes);
+                    const mergedDoc = await PDFDocument.create();
 
-                pdf.setFontSize(11);
-                pdf.setTextColor(100, 100, 100);
-                pdf.text('\u05d4\u05d7\u05d5\u05d6\u05d4 \u05d4\u05de\u05dc\u05d0 \u05de\u05e6\u05d5\u05e8\u05e3 \u05db\u05e7\u05d5\u05d1\u05e5 \u05e0\u05e4\u05e8\u05d3:', 190, 105, { align: 'right' });
-                pdf.setTextColor(41, 128, 185);
-                pdf.textWithLink(res.contract_pdf_url.length > 60 ? res.contract_pdf_url.substring(0,60)+'...' : res.contract_pdf_url, 190, 115, { align: 'right', url: res.contract_pdf_url });
-                pdf.setTextColor(0, 0, 0);
-                addLog('\u2713 Summary page with contract link added');
+                    // העתק את כל עמודי החוזה המקורי
+                    const contractPages = await mergedDoc.copyPages(contractDoc, contractDoc.getPageIndices());
+                    contractPages.forEach(p => mergedDoc.addPage(p));
+
+                    // העתק עמוד חתימה
+                    const [sigPage] = await mergedDoc.copyPages(sigDoc, [0]);
+                    mergedDoc.addPage(sigPage);
+
+                    finalPdfBytes = await mergedDoc.save();
+                    addLog('✓ PDFs merged: ' + contractDoc.getPageCount() + ' contract pages + signature page');
+                } catch (mergeErr) {
+                    addLog('⚠ Merge failed: ' + mergeErr.message + ' — falling back to signature-only PDF', 'WARN');
+                    finalPdfBytes = sigPdfBytes;
+                }
             } else {
-                // אין PDF — html2canvas על תבנית הטקסט
-                document.getElementById('pdf1-terms').textContent = res.terms_text || '\u05d0\u05d9\u05df \u05ea\u05e7\u05e0\u05d5\u05df \u05de\u05d5\u05d2\u05d3\u05e8';
+                // ===== אין PDF סרוק — html2canvas על terms_text + עמוד חתימה =====
+                addLog('No contract PDF — using terms text');
+                document.getElementById('pdf1-terms').textContent = res.terms_text || 'אין תקנון מוגדר';
                 const logoImg = document.querySelector('#pdf-page1 img');
                 if (logoImg) {
                     await new Promise(resolve => {
@@ -854,35 +862,32 @@
                         setTimeout(resolve, 3000);
                     });
                 }
+                const termsPdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
                 const canvas1 = await html2canvas(document.getElementById('pdf-page1'), html2canvasOpts);
                 const img1Data = canvas1.toDataURL('image/jpeg', 0.7);
                 const page1Height = (canvas1.height * 210) / canvas1.width;
                 if (page1Height > 297) {
                     const numPages = Math.ceil(page1Height / 297);
                     for (let i = 0; i < numPages; i++) {
-                        if (i > 0) pdf.addPage();
-                        pdf.addImage(img1Data, 'JPEG', 0, -i * 297, 210, page1Height);
+                        if (i > 0) termsPdf.addPage();
+                        termsPdf.addImage(img1Data, 'JPEG', 0, -i * 297, 210, page1Height);
                     }
                 } else {
-                    pdf.addImage(img1Data, 'JPEG', 0, 0, 210, page1Height);
+                    termsPdf.addImage(img1Data, 'JPEG', 0, 0, 210, page1Height);
                 }
+                termsPdf.addPage();
+                termsPdf.addImage(imgSigData, 'JPEG', 0, 0, 210, 297);
+                finalPdfBytes = termsPdf.output('arraybuffer');
             }
 
-            // ===== עמוד חתימה (תמיד בעמוד חדש) =====
-            pdf.addPage();
-            const sigPageElement = document.getElementById('pdf-signature-page');
-            const canvasSig = await html2canvas(sigPageElement, html2canvasOpts);
-            const imgSigData = canvasSig.toDataURL('image/jpeg', 0.7);
-            pdf.addImage(imgSigData, 'JPEG', 0, 0, 210, 297);
-
-            // המר PDF ל-base64
-            const pdfBase64 = pdf.output('datauristring').split(',')[1];
+            // המר ל-base64
+            const pdfBase64 = btoa(String.fromCharCode(...new Uint8Array(finalPdfBytes)));
             addLog('✓ Multi-page PDF generated');
 
             // STEP 4: הורדה מקומית של ה-PDF (גיבוי למשתמש)
             addLog('STEP 4: Downloading PDF locally...');
             const localFileName = `Yakum_Contract_${insertData.id.substr(0,8)}.pdf`;
-            const pdfBlob = pdf.output('blob');
+            const pdfBlob = new Blob([finalPdfBytes], { type: 'application/pdf' });
             const localUrl = URL.createObjectURL(pdfBlob);
             const downloadLink = document.createElement('a');
             downloadLink.href = localUrl;
